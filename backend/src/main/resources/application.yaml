@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/apptive
+    username: postgres
+    password: apptive1234
+  jpa:
+    hibernate:
+      ddl-auto: update   # 개발 초기엔 update, 나중에 validate/none으로 전환
+    show-sql: true
