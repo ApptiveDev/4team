@@ -1,92 +1,73 @@
- # (프로젝트명)
-(개요, 프로젝트 소개)
+# 삶을 기록해주는 AI (가제) — 가족 썸원 컨셉
 
- ## 📝 주요기능
+> 부모와 자녀를 초대 코드로 1:1 연결하고, 매일 같은 질문에 부모는 **음성**으로,
+> 자녀는 **텍스트**로 답한다. 둘 다 답하면 서로의 답이 공개된다.
+> 부모의 답변은 STT → LLM 정리 → (선택)TTS 파이프라인을 거쳐 원본 육성 + 정리
+> 자막으로, 자녀의 답변은 TTS로 부모에게 낭독되어 전달된다.
 
- ## 🔨 기술스택 
-<!-- 
-(백엔드, 프론트, 협업에 사용한 툴, 라이브러리, 프레임워크)
+- MVP 프로토타입 마감: **2026-10-02**
+- 정식 출시 목표: **2026년 12월 초**
+- 팀 구성: 프론트엔드 3명, 백엔드 1명
+- 상세 기획: `기획서_삶을기록해주는AI.md`, `기획서_v2_보완안.md` (가족 썸원 피벗 근거) 참고
 
-기술스택 배지 추가하는 방법 
-1. https://simpleicons.org/ 에서 기술스택명 검색
-2. 기술스택의 로고, 컬러 HEX 코드를 아래와 같이 입력
-  - https://img.shields.io/badge/<표시될 이름>-<컬러 HEX>?style=for-the-badge&logo=<로고명>
-3. 해당 URL로 마크다운 이미지 첨부
-  - ![이미지명](URL) 형식
--->
+## 기술 스택
 
-(백엔드, 프론트, 협업에 사용한 툴, 라이브러리, 프레임워크)
+| 영역 | 기술 |
+|---|---|
+| 프론트엔드 | Flutter (Dart) — 녹음 `record`, 재생 `just_audio` |
+| 백엔드 | Spring Boot (Java/Kotlin), REST API, Layered Architecture |
+| DB | PostgreSQL (개발: Docker 컨테이너 / 출시: AWS RDS PostgreSQL) |
+| STT / LLM 정리 / TTS | **OpenAI 단일 벤더** — `gpt-transcribe` / `gpt-5-mini` / `gpt-4o-mini-tts` (질문 음성 안내는 빌드 시 사전 생성·캐싱) |
+| 스토리지(원본 음성 아카이빙) | Cloudflare R2 (S3 호환 SDK 사용) |
 
-![intellij](https://img.shields.io/badge/intellij_idea-000000?style=for-the-badge&logo=intellijidea&logoColor=white)
-![vscode](https://img.shields.io/badge/vscode-000000?style=for-the-badge&logo=vscode&logoColor=white)
-![androidstudio](https://img.shields.io/badge/android_studio-3DDC84?style=for-the-badge&logo=androidstudio&logoColor=white)  
+## 저장소 구조
 
-![docker](https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![nginx](https://img.shields.io/badge/nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
-![redis](https://img.shields.io/badge/redis-FF4438?style=for-the-badge&logo=redis&logoColor=white)
-![github-action](https://img.shields.io/badge/github_actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
-
-![react](https://img.shields.io/badge/react-61DAFB?style=for-the-badge&logo=react&logoColor=white)
-![jetpack-compose](https://img.shields.io/badge/jetpack_compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
-![spring](https://img.shields.io/badge/spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
-
-| 스택 | 설명 | 용도 |
-|-----|-----|-----|
-| 스택1 | 스택에 대한 설명 | 프로젝트 쓰임새 |
-| ... | ... | ... |
-
- ## 🖼️ 스크린샷
-
- ## 🤝 개발협업
- ### 🌲 Branch 
 ```
-main ------- backend/<이름>/(<이슈번호>-)<작업명>    (백엔드 작업)
-     \------ frontend/<이름>/(<이슈번호>-)<작업명>   (프론트 작업)
-
-ex) backend/wonseok/#10-add-animation
-ex) frontend/wonseok/fix-login-not-allowed   (이슈가 없으면)
+/
+├── README.md              ← 이 파일
+├── AGENTS.md               ← 공통 API 계약, 데이터 모델, 변경 관리 프로세스 (반드시 먼저 읽기)
+├── frontend/
+│   ├── AGENTS.md           ← Flutter 컨벤션, 화면별 담당, 프론트 전용 일정
+│   └── (Flutter 프로젝트)
+└── backend/
+    ├── AGENTS.md           ← Spring Boot 컨벤션, 상세 API 스펙, 백엔드 전용 일정
+    └── (Spring Boot 프로젝트)
 ```
-브랜치 관리 전략은 `main`과 개인 브랜치만이 존재하는 간단한 Github Flow를 따릅니다.
-- `main` 브랜치는 항상 작동 가능한 안정된 상태여야 한다.
-  - 직접 커밋하지 않으며, Pull Request만으로 변경한다.
-- 개인 브랜치에서 작업을 진행한다.
-- 브랜치명은 작업 내용과 직군이 구체적으로 드러나도록 한다.
-  - 브랜치명에 `backend`, `frontend`를 구분한다.
-  - 띄어쓰기는 하이픈(`-`)으로 구분한다.
-  - 브랜치명은 전부 소문자를 사용한다.
 
-프로젝트에 CI/CD를 구성하는 등 규모가 커지면 `develop` 브랜치를 추가하거나 `git flow`로 전환할 수 있습니다. 
+**읽는 순서**: 이 README → 루트 `AGENTS.md`(공통 계약) → 각자 역할에 맞는
+`frontend/AGENTS.md` 또는 `backend/AGENTS.md`.
 
- ### 🍪 Pull Request
+## 로컬 개발 환경 시작하기
+
+### 백엔드
+
+```bash
+cd backend
+docker compose up -d          # PostgreSQL 컨테이너 기동 (5432 포트)
+cp .env.example .env          # 환경 변수 채우기 (API 키 등은 팀 비공개 채널에서 공유)
+./gradlew bootRun             # 또는 IDE에서 Application 클래스 실행
 ```
-main    ---●---●---●---------● abc (Squash Merge)
-                \           /
-개인브랜치          a---b---c   ('abc' 합쳐진 하나의 커밋으로 병합)
 
-PR 제목: [Backend/Frontend] <이슈번호> <작업명>
-ex) [Backend] #10 프로필 화면에서 로그인 불가하던 문제 해결
-ex) [Backend] 프로필 화면에서 로그인 불가하던 문제 해결     (이슈가 없으면)
+### 프론트엔드
+
+```bash
+cd frontend
+flutter pub get
+flutter run                   # API_BASE_URL은 lib/config/env.dart 에서 로컬 백엔드 주소로 설정
 ```
-`main` 브랜치의 커밋은 Pull Request 단위로 쌓으며 이를 위해 **Squash Merge**를 원칙으로 합니다. **Squash Merge**는 브랜치가 병합될 때 커밋들이 PR 제목으로 합쳐지게 됩니다. 커밋은 개인마다 기준이 조금씩 다른 반면, PR/브랜치는 이슈 단위로 생성하므로 일관된 기준으로 커밋을 쌓을 수 있어 히스토리 추적을 용이하게 합니다.
-- 커밋 제목은 **PR 제목**으로 한다.
-    - Backend/Frontend를 구분한다.
-    - 작업 내용을 구체적으로 드러나게 적는다.
-- 커밋 내용은 **PR 내용**으로 한다.
-    - 브랜치에서의 변경점을 상세히 적는다.
-- Pull Request는 작은 작업 단위(200줄 이내 권장)로 한다.
 
- ## 🛠 설치방법
-(다른 개발자가 이 프로젝트를 테스트해볼 수 있도록 프론트, 백엔드 설치/실행 절차 안내)
+## 일정 개요 (상세는 AGENTS.md의 "일자별 계획" 참고)
 
-### 💻 Frontend
+| 날짜 | 마일스톤 |
+|---|---|
+| 9/23 (오늘) | 저장소 세팅, API 계약 확정, 프로젝트 스캐폴드 |
+| 9/24 ~ 9/30 | 핵심 8단계 루프(페어링→질문→녹음→STT/LLM→공개→재생) 순차 구현 |
+| 10/1 | 통합 QA, 엣지케이스 처리 |
+| 10/2 | MVP 프로토타입 제출 |
+| 12월 초 | 정식 출시 |
 
-### 💻 Backend
+## 연동 문제가 생겼을 때
 
- ## 🧑‍💻 팀원
-| <img width="100" src="https://github.com/cotidie.png"> | <img width="100" src="https://github.com/github.png"> | 
-|:----------------------:|:----------------------:|
-| [장원석](https://github.com/cotidie) | [팀원](https://github.com/cotidie) |
-| 💻 Android | 💻 역할 |
-| 15기 | 기수 |
-
- 
+프론트-백엔드 API가 안 맞거나 스펙이 애매하면, **문서를 먼저 고치지 말고
+GitHub Issue를 등록**하세요. 처리 방식은 루트 `AGENTS.md`의 "이슈 처리 프로세스"
+섹션에 정리되어 있습니다.
