@@ -5,12 +5,12 @@
 
 ## 기술 스택
 
-- Spring Boot (Java 또는 Kotlin — 팀 선호에 맞춰 오늘 확정), Gradle
+- Spring Boot, Gradle
 - REST API, **Controller – Service – Repository** 계층 구조, DTO/Entity 분리
 - 예외는 `@RestControllerAdvice` 공통 핸들러로 처리
 - DB: 개발은 Docker Compose PostgreSQL, 출시는 AWS RDS PostgreSQL (엔진 동일하게 유지)
-- 외부 연동: OpenAI(`gpt-transcribe`, `gpt-4o-mini-tts`), Anthropic(Claude Haiku 4.5),
-  Cloudflare R2 (S3 호환 SDK)
+- 외부 연동: **OpenAI 단일 벤더** — STT(`gpt-transcribe`), LLM 정리(`gpt-5-mini`),
+  TTS(`gpt-4o-mini-tts`), + Cloudflare R2 (S3 호환 SDK, 스토리지만 별도)
 
 ## 패키지 구조 (제안)
 
@@ -24,7 +24,7 @@ com.example.app
 │   └── answer/         (Answer)
 ├── infra
 │   ├── stt/             (OpenAI gpt-transcribe 클라이언트)
-│   ├── llm/             (Claude Haiku 클라이언트)
+│   ├── llm/             (OpenAI gpt-5-mini 클라이언트)
 │   ├── tts/             (OpenAI TTS 클라이언트)
 │   └── storage/         (R2 업로드/다운로드 클라이언트)
 ├── common
@@ -43,8 +43,7 @@ DB_URL=jdbc:postgresql://localhost:5432/app
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
+OPENAI_API_KEY=   # STT(gpt-transcribe) + LLM 정리(gpt-5-mini) + TTS(gpt-4o-mini-tts) 전부 이 키 하나로 호출
 
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
@@ -76,7 +75,7 @@ APP_JWT_SECRET=
 1. multipart로 오디오 파일 수신 → `Recording` 엔티티 생성, status=`UPLOADED`
 2. 오디오 파일을 R2에 업로드 (원본 그대로, 가공 없음) → `audioUrlOriginal` 저장
 3. `gpt-transcribe` 호출 → 성공 시 `sttText` 저장, status=`STT_DONE` / 실패 시 status=`FAILED`, `failedReason` 저장 후 **재시도 가능하게 API 별도 제공**(`POST /recordings/{id}/retry`, P1로 미뤄도 무방)
-4. Claude Haiku 4.5 호출(STT 텍스트 정리) → 성공 시 `summaryText` 저장, status=`LLM_DONE`
+4. `gpt-5-mini` 호출(STT 텍스트 정리) → 성공 시 `summaryText` 저장, status=`LLM_DONE`
 5. status=`READY`로 전환
 
 > MVP 기간(~10/2)에는 **동기 처리(요청-응답 안에서 순차 호출)로 단순하게
@@ -122,7 +121,7 @@ boolean revealed = recording.getStatus() == READY && answer.getStatus() == SUBMI
 | 9/24 | `User`/`Pair` 엔티티, 간편 인증(이름+역할+기기토큰), `POST /users` |
 | 9/25 | `POST /pairs/invite`, `POST /pairs/join`, `Question`/`DailyAssignment` 시드 + `GET /questions/today` |
 | 9/26 | `POST /recordings` (R2 업로드까지), `Recording` 상태 필드, `GET /recordings/{id}` |
-| 9/27 | `gpt-transcribe` 연동(STT_DONE), Claude Haiku 연동(LLM_DONE, 가드레일 프롬프트 적용) |
+| 9/27 | `gpt-transcribe` 연동(STT_DONE), `gpt-5-mini` 연동(LLM_DONE, 가드레일 프롬프트 적용) — 같은 OpenAI SDK/키 재사용이라 연동 자체는 더 간단해질 것 |
 | 9/28 | `POST /answers`, `GET /today` 공개 판단 로직 |
 | 9/29 | `GET /answers/{id}/audio` (자녀 답변 TTS 낭독, 캐싱), 질문 음성 사전 생성 배치 스크립트 |
 | 9/30 | `GET /stories` 보관함(페이지네이션), 프론트와 전체 루프 통합 테스트 |
