@@ -67,6 +67,13 @@ Spring Boot는 `.env`를 자동으로 읽지 않는다. IntelliJ로 실행한다
 6. R2·STT·LLM 실제 연동
 7. TTS·지난 이야기
 
+## Mock 질문 교체
+
+MVP 날짜별 질문은 `src/main/resources/seed/mock-questions.json`에서 관리한다.
+회의 후 질문이 확정되면 기존 `id`와 `scheduledDate`를 유지한 채 `text`,
+`category`를 수정한다. 질문 안내 TTS가 준비되기 전까지 `audioUrl`은 `null`이며,
+서버 재시작 시 JSON 내용이 DB에 반영된다.
+
 프론트는 [`../docs/api-contract.md`](../docs/api-contract.md)의 JSON으로 먼저
 개발한다. 백엔드가 완성될 때까지 기다릴 필요가 없다.
 
