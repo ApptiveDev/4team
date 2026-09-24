@@ -30,7 +30,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stories',
         builder: (context, state) => const PlaceholderPage(title: '지난 이야기'),
-      ), // A
+      ), // C
     ],
   );
 });

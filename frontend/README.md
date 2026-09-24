@@ -92,14 +92,16 @@ lib/
 
 | 경로 | 화면 | 담당 |
 |---|---|---|
-| `/onboarding` | 역할 선택·가입 | A |
-| `/pairing` | 페어링 | A |
-| `/today` | 오늘 질문 | A |
-| `/recording` | 부모 녹음 | B |
-| `/child-answer` | 자녀 답변 | C |
-| `/stories` | 지난 이야기 | A |
+| `/onboarding` | 역할 선택·가입 | A 박강현 |
+| `/pairing` | 페어링 | A 박강현 |
+| `/today` | 오늘 질문 | A 박강현 |
+| `/recording` | 부모 녹음 | B Yin Min Aye |
+| `/child-answer` | 자녀 답변 | C 정우영 |
+| `/stories` | 지난 이야기 | C 정우영 |
 
 현재는 모두 `PlaceholderPage`입니다. 각 담당자가 `router.dart`의 `builder`만 자기 화면으로 교체합니다.
+부모의 자녀 답변 확인(B)과 자녀의 부모 답변 확인(C)처럼 아직 없는 경로는 담당자가 추가합니다.
+전체 역할 분담은 [`AGENTS.md`](AGENTS.md) 8장을 따릅니다.
 
 ## Mock 데이터
 
