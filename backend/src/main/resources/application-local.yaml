@@ -1,5 +1,0 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/apptive
-    username: postgres
-    password: apptive1234
