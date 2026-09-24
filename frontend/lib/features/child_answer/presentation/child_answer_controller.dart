@@ -119,5 +119,7 @@ class ChildAnswerController extends Notifier<ChildAnswerSubmitState> {
   }
 }
 
-final childAnswerControllerProvider = NotifierProvider.autoDispose
-    <ChildAnswerController, ChildAnswerSubmitState>(ChildAnswerController.new,);
+final childAnswerControllerProvider =
+    NotifierProvider.autoDispose<ChildAnswerController, ChildAnswerSubmitState>(
+      ChildAnswerController.new,
+    );
