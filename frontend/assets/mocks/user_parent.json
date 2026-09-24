@@ -1,0 +1,11 @@
+{
+  "user": {
+    "id": "usr_01J8M8A9G39WJMB5KVX46DP3FQ",
+    "name": "김영희",
+    "role": "PARENT",
+    "pairingStatus": "UNPAIRED"
+  },
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.example.signature",
+  "tokenType": "Bearer",
+  "expiresAt": "2026-10-24T09:00:00+09:00"
+}

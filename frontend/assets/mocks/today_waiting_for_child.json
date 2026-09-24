@@ -1,0 +1,27 @@
+{
+  "assignment": {
+    "id": "asg_01J8M90G3M9BT7PRD6X4CN9C0E",
+    "assignedDate": "2026-09-24",
+    "question": {
+      "id": "qst_045",
+      "text": "어릴 때 가장 좋아했던 놀이는 무엇이었나요?",
+      "category": "CHILDHOOD",
+      "audioUrl": "https://cdn.example.com/questions/qst_045.mp3"
+    }
+  },
+  "viewerRole": "PARENT",
+  "parentSubmissionStatus": "SUBMITTED",
+  "childSubmissionStatus": "NOT_SUBMITTED",
+  "revealStatus": "WAITING_FOR_CHILD",
+  "canViewPartnerAnswer": false,
+  "myAnswer": {
+    "type": "VOICE",
+    "recordingId": "rec_01J8M96KKXMV5XMXY6KGJ05Q6D",
+    "processingStatus": "LLM_PROCESSING",
+    "originalAudioUrl": "https://signed.example.com/rec_123.m4a?expires=...",
+    "originalAudioExpiresAt": "2026-09-24T10:20:00+09:00",
+    "sttText": "어릴 때는 동네에서 고무줄 놀이를...",
+    "summaryText": null,
+    "processingNotice": null
+  }
+}
