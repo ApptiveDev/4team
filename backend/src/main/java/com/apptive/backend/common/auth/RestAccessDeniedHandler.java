@@ -32,15 +32,15 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
 		HttpServletResponse response,
 		AccessDeniedException accessDeniedException
 	) throws IOException {
-		response.setStatus(ErrorCode.ACCESS_DENIED.status().value());
+		response.setStatus(ErrorCode.ROLE_NOT_ALLOWED.status().value());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		response.setCharacterEncoding("UTF-8");
 		objectMapper.writeValue(
 			response.getOutputStream(),
 			apiErrorFactory.create(
 				request,
-				ErrorCode.ACCESS_DENIED,
-				ErrorCode.ACCESS_DENIED.message(),
+				ErrorCode.ROLE_NOT_ALLOWED,
+				ErrorCode.ROLE_NOT_ALLOWED.message(),
 				List.of()
 			)
 		);
