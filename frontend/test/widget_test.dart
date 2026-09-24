@@ -1,30 +1,15 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:life_record/main.dart';
+import 'package:life_record/app/app.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('앱 실행 시 가입 화면이 표시된다', (WidgetTester tester) async {
+    // 앱 띄우기 (main.dart와 똑같이 ProviderScope로 감싸기)
+    await tester.pumpWidget(const ProviderScope(child: App()));
+    await tester.pumpAndSettle(); // 화면 이동이 끝날 때까지 대기
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // 첫 화면(/onboarding)의 제목이 보이는지 확인
+    expect(find.text('역할 선택·가입'), findsOneWidget);
   });
 }
