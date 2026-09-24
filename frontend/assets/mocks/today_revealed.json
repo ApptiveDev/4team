@@ -1,0 +1,33 @@
+{
+  "assignment": {
+    "id": "asg_01J8M90G3M9BT7PRD6X4CN9C0E",
+    "assignedDate": "2026-09-24",
+    "question": {
+      "id": "qst_045",
+      "text": "어릴 때 가장 좋아했던 놀이는 무엇이었나요?",
+      "category": "CHILDHOOD",
+      "audioUrl": "https://cdn.example.com/questions/qst_045.mp3"
+    }
+  },
+  "viewerRole": "CHILD",
+  "parentSubmissionStatus": "SUBMITTED",
+  "childSubmissionStatus": "SUBMITTED",
+  "revealStatus": "REVEALED",
+  "canViewPartnerAnswer": true,
+  "myAnswer": {
+    "type": "TEXT",
+    "answerId": "ans_01J8M9DDP02MTHJY44YKN3ZE73",
+    "text": "저는 놀이터에서 숨바꼭질하던 시간이 기억나요.",
+    "ttsStatus": "READY"
+  },
+  "partnerAnswer": {
+    "type": "VOICE",
+    "recordingId": "rec_01J8M96KKXMV5XMXY6KGJ05Q6D",
+    "processingStatus": "READY",
+    "originalAudioUrl": "https://signed.example.com/rec_123.m4a?expires=...",
+    "originalAudioExpiresAt": "2026-09-24T10:20:00+09:00",
+    "sttText": "어릴 때는 동네에서 고무줄 놀이를 했지.",
+    "summaryText": "어린 시절 동네 친구들과 고무줄 놀이를 즐겼어요.",
+    "processingNotice": null
+  }
+}

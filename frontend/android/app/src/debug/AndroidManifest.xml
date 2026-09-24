@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. ... -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- 로컬 백엔드(http://10.0.2.2:8080) 연결용, debug 빌드에만 적용 -->
+    <application android:usesCleartextTraffic="true"/>
+</manifest>

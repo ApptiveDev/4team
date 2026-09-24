@@ -1,0 +1,11 @@
+{
+  "user": {
+    "id": "usr_child_456",
+    "name": "김민지",
+    "role": "CHILD",
+    "pairingStatus": "UNPAIRED"
+  },
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.example.child.signature",
+  "tokenType": "Bearer",
+  "expiresAt": "2026-10-24T09:00:00+09:00"
+}
