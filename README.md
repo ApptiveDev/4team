@@ -208,6 +208,9 @@ flowchart TD
 3. **한국어 시니어 UX.** 국내 가족 질문 앱은 아직 작고(하루한질문 다운로드 10회 이상, 2026년
    9월 기준) 모두 글 입력 기반입니다.
 
+HALO, 기억의 서랍, 담소 등 국내외 서비스 20여 개를 더 자세히 비교한 내용은
+[`docs/competitor-analysis.md`](docs/competitor-analysis.md)에 있습니다.
+
 ---
 
 ## 시스템 아키텍처
@@ -291,7 +294,8 @@ STT나 LLM이 실패하면 자막 없이 원본 음성만 공개하며 안내 �
 ├── AGENTS.md              ← 프로젝트 공통 규칙 (반드시 먼저 읽기)
 ├── CLAUDE.md              ← Claude Code 진입점 (AGENTS.md를 불러옴)
 ├── docs/
-│   └── api-contract.md    ← API 요청·응답·상태값의 단일 기준
+│   ├── api-contract.md    ← API 요청·응답·상태값의 단일 기준
+│   └── competitor-analysis.md ← 유사 서비스 분석과 인사이트
 ├── frontend/              ← Flutter 앱
 │   ├── AGENTS.md          ← Flutter 규칙, 화면별 담당, 프론트 일정
 │   ├── README.md          ← 설치·실행·Mock 전환
