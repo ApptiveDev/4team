@@ -1,0 +1,74 @@
+[
+  {
+    "id": "qst_mock_20260924",
+    "scheduledDate": "2026-09-24",
+    "text": "어릴 때 가장 좋아했던 놀이는 무엇이었나요?",
+    "category": "CHILDHOOD",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20260925",
+    "scheduledDate": "2026-09-25",
+    "text": "최근 가장 행복했던 순간은 언제였나요?",
+    "category": "DAILY_LIFE",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20260926",
+    "scheduledDate": "2026-09-26",
+    "text": "어릴 때 가장 좋아했던 음식은 무엇이었나요?",
+    "category": "FOOD",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20260927",
+    "scheduledDate": "2026-09-27",
+    "text": "다시 한번 가 보고 싶은 장소가 있나요?",
+    "category": "TRAVEL",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20260928",
+    "scheduledDate": "2026-09-28",
+    "text": "학창 시절 가장 기억에 남는 일은 무엇인가요?",
+    "category": "SCHOOL",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20260929",
+    "scheduledDate": "2026-09-29",
+    "text": "지금 가장 고마움을 전하고 싶은 사람은 누구인가요?",
+    "category": "RELATIONSHIP",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20260930",
+    "scheduledDate": "2026-09-30",
+    "text": "가족과 함께했던 여행 중 가장 기억에 남는 순간은 무엇인가요?",
+    "category": "FAMILY",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20261001",
+    "scheduledDate": "2026-10-01",
+    "text": "스스로 가장 자랑스러웠던 순간은 언제였나요?",
+    "category": "LIFE",
+    "audioUrl": null,
+    "active": true
+  },
+  {
+    "id": "qst_mock_20261002",
+    "scheduledDate": "2026-10-02",
+    "text": "오늘 가족에게 꼭 전하고 싶은 말이 있나요?",
+    "category": "FAMILY",
+    "audioUrl": null,
+    "active": true
+  }
+]

@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.apptive.backend.domain.pair.entity.PairInvitation;
+import com.apptive.backend.domain.assignment.repository.AssignmentRepository;
 import com.apptive.backend.domain.pair.repository.FamilyPairRepository;
 import com.apptive.backend.domain.pair.repository.PairInvitationRepository;
 import com.apptive.backend.domain.user.entity.Role;
@@ -40,6 +41,9 @@ class UserPairControllerTest {
 	private ObjectMapper objectMapper;
 
 	@Autowired
+	private AssignmentRepository assignmentRepository;
+
+	@Autowired
 	private PairInvitationRepository invitationRepository;
 
 	@Autowired
@@ -53,6 +57,7 @@ class UserPairControllerTest {
 
 	@BeforeEach
 	void cleanDatabase() {
+		assignmentRepository.deleteAll();
 		invitationRepository.deleteAll();
 		familyPairRepository.deleteAll();
 		userRepository.deleteAll();
