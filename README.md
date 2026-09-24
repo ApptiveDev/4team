@@ -8,7 +8,8 @@
 
 - MVP 프로토타입 마감: **2026-10-02**
 - 정식 출시 목표: **2026년 12월 초**
-- 팀 구성: 프론트엔드 3명, 백엔드 1명
+- 팀 구성: 기획 윤서현, 디자인 장은우, 프론트엔드 3명(A 박강현 · B Yin Min Aye ·
+  C 정우영), 백엔드 1명(제수지). 프론트 역할 분담은 [`frontend/AGENTS.md`](frontend/AGENTS.md) 8장
 - API 계약: [`docs/api-contract.md`](docs/api-contract.md)
 
 ## 기술 스택
@@ -27,6 +28,7 @@
 /
 ├── README.md              ← 이 파일
 ├── AGENTS.md               ← 프로젝트 공통 규칙 (반드시 먼저 읽기)
+├── CLAUDE.md               ← Claude Code용 진입점 (AGENTS.md를 불러옴)
 ├── docs/
 │   └── api-contract.md     ← API 요청·응답·상태값의 단일 진실 공급원
 ├── frontend/
@@ -59,8 +61,12 @@ set +a
 ```bash
 cd frontend
 flutter pub get
-flutter run                   # API_BASE_URL은 lib/config/env.dart 에서 로컬 백엔드 주소로 설정
+flutter run                   # 기본값은 Mock 모드 (백엔드 없이 실행)
 ```
+
+실제 백엔드 연결, Android Studio 없이 SDK만 설치하는 방법, 에뮬레이터 실행은
+[`frontend/README.md`](frontend/README.md)를 참고한다. API 주소는 코드에 고정하지 않고
+`--dart-define=API_BASE_URL=...`로 넘긴다(`lib/core/config/app_config.dart`).
 
 ## 일정 개요
 

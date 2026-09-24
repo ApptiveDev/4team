@@ -141,31 +141,45 @@ assets/mocks/
 
 ## 8. 프론트 3명 역할
 
-공통 파일을 여러 명이 동시에 수정하지 않도록 최초 뼈대 책임자를 명확히 한다.
+작업량이 3등분되도록 **화면을 보는 사람 기준**으로 나눈다. 앱 진입과 연결은 A,
+부모가 보는 화면은 B, 자녀가 보는 화면과 기록은 C가 맡는다. 공통 파일을 여러 명이
+동시에 수정하지 않도록 최초 뼈대 책임자를 명확히 한다.
 
-### A — 가입·페어링·홈·보관함
+| 담당 | 이름 | 범위 | 경로 |
+|---|---|---|---|
+| A | 박강현 | 가입·페어링·홈 | `/onboarding`, `/pairing`, `/today` |
+| B | Yin Min Aye | 부모 화면 | `/recording`, 부모의 자녀 답변 확인 |
+| C | 정우영 | 자녀 화면·보관함 | `/child-answer`, 답변 공개, `/stories` |
 
-- 역할 선택과 가입
-- 초대 코드 생성·입력
-- 오늘 질문 홈과 상태 분기
-- 지난 이야기 목록·페이지네이션
+### A (박강현) — 가입·페어링·홈
 
-### B — 부모 음성 흐름
+- deviceId 생성·보관, 역할 선택과 가입
+- 초대 코드 생성(자녀)·입력(부모), 자녀의 연결 대기 화면
+- router redirect: 토큰·페어링 여부로 첫 화면 결정, 401이면 가입 화면으로 이동
+- 오늘 질문 홈: `revealStatus` 분기와 B·C 화면으로 이동
+
+### B (Yin Min Aye) — 부모 화면
 
 - 질문 안내 음성 재생
 - 마이크 권한, 녹음 시작·정지·60초 제한
 - multipart 업로드와 재녹음
 - 처리 상태 폴링·실패·재시도 UI
+- 공통 오디오 재생 위젯(`lib/core/widgets/`) — C도 사용한다
+- 부모의 자녀 답변 확인: 텍스트 표시, TTS 상태 조회(`GET /answers/{answerId}/audio`)와 재생
 
-### C — 공통 기반·자녀 답변·공개 화면
+### C (정우영) — 공통 기반·자녀 화면·보관함
 
-- Day 1: 스캐폴드, router, theme, Dio, secure storage, Mock DataSource 뼈대
+- Day 1: 스캐폴드, router, theme, Dio, secure storage, Mock DataSource 뼈대 (완료)
 - 자녀 텍스트 답변 작성·수정
 - `revealStatus` 대기 화면
-- 원본 음성·자막·TTS가 있는 공개 답변 화면
+- 자녀의 부모 답변 확인: 원본 음성 우선 재생, 정리 텍스트는 보조 자막(B의 오디오 위젯 사용)
+- 지난 이야기 목록·페이지네이션(공개 답변 화면 구성 재사용)
 
-C의 공통 기반 PR이 병합된 이후 공통 컴포넌트 변경은 담당자끼리 먼저 공유한다.
-A는 가입 흐름이 끝난 뒤 보관함을 맡아 C의 후반 부담을 줄인다.
+### 담당 사이에서 먼저 합의할 것
+
+- A → B·C: 오늘 홈에서 넘겨줄 값(assignmentId, 질문 정보). 9/25 회의에서 정한다.
+- B → C: 오디오 재생 위젯의 사용법. B가 9/26까지 먼저 공유한다.
+- C의 공통 기반 PR이 병합된 이후 공통 컴포넌트 변경은 담당자끼리 먼저 공유한다.
 
 ## 9. 일정
 
@@ -203,3 +217,51 @@ API 계약이 실제 응답과 다르면 프론트에서 임시 우회 필드를
 - 부모·자녀 정상 흐름을 Android 에뮬레이터에서 각각 확인
 - API 변경 시 DTO와 Mock fixture를 함께 갱신
 - 실제 token, 개인정보, signed URL query를 로그에 남기지 않음
+
+## 12. 에이전트 작업 절차
+
+사람과 AI 코딩 에이전트가 같은 순서로 작업한다.
+
+1. 작업 전 `git pull --ff-only origin main`으로 최신화하고 `feature/<기능명>` 브랜치를 만든다.
+2. 화면이 쓰는 API를 [`../docs/api-contract.md`](../docs/api-contract.md)에서 찾고,
+   필요한 Mock이 `assets/mocks/`에 있는지 확인한다. 없으면 계약 예시 JSON을 그대로
+   옮겨 추가한다.
+3. `features/<기능명>/data → domain → presentation` 순서로 만든다. 새 DataSource는
+   `features/onboarding/data/auth_data_source.dart`의 Mock/API 교체 패턴을 따른다.
+4. 담당 화면은 `lib/app/router.dart`에서 자기 경로의 `builder`만 교체한다.
+5. 작업 디렉터리 `frontend/`에서 아래를 모두 통과시킨 뒤 PR을 연다.
+
+```bash
+dart format .
+flutter analyze
+flutter test
+```
+
+### 공통 파일
+
+다음 파일은 여러 담당자가 함께 쓴다. 수정이 필요하면 PR 전에 팀에 먼저 공유하고,
+PR 본문에 영향 받는 화면을 적는다.
+
+| 파일 | 이유 |
+|---|---|
+| `pubspec.yaml` | 패키지 추가는 모든 팀원의 `pub get`에 영향 |
+| `lib/app/router.dart` | 경로 추가·redirect는 전체 화면 흐름에 영향 |
+| `lib/core/**` | Dio, 토큰 저장, 테마, 공통 위젯 |
+| `assets/mocks/*.json` | 계약 예시와 1:1로 맞춰야 함 |
+
+### 계약과 현재 구현의 차이 (2026-09-24 기준)
+
+화면이 계약과 다르게 동작하면 아래를 먼저 확인한다. 해결되면 이 목록에서 지운다.
+
+- `GET /today`는 아직 답변 제출 API가 없어서 항상 `WAITING_FOR_BOTH`와
+  `NOT_SUBMITTED`를 반환한다. 이 상태의 Mock(`today_waiting_for_both.json`)이 없다.
+- 질문 `audioUrl`은 질문 안내 TTS가 준비될 때까지 `null`이다. 재생 버튼은 `null`이면
+  숨긴다.
+- 백엔드에는 `INVITE_CODE_NOT_FOUND`(404), `INVITE_CODE_EXPIRED`(409)가 있지만 계약
+  에러 표에는 없다.
+- 로그인 사용자 정보를 다시 조회하는 API(`GET /users/me`)가 없다. 앱 재실행 후 역할과
+  페어링 여부는 가입 응답을 저장해 두거나 `GET /today`의 `409 PAIR_NOT_FOUND`로 판단한다.
+- `lib/core/network/dio_provider.dart`는 401에서 토큰만 지운다. 가입 화면으로 보내는
+  router redirect는 아직 없다.
+- 백엔드 질문 seed는 2026-09-24 ~ 2026-10-02 9일치다. 그 이후 날짜는
+  `404 TODAY_ASSIGNMENT_NOT_FOUND`가 난다.
