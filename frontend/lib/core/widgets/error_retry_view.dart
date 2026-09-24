@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 class ErrorRetryView extends StatelessWidget {
-  const ErrorRetryView({super.key, required this.message, required this.onRetry});
+  const ErrorRetryView({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
   final String message;
   final VoidCallback onRetry;
 
@@ -14,8 +18,11 @@ class ErrorRetryView extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, size: 56),
           const SizedBox(height: 16),
-          Text(message, textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: onRetry,

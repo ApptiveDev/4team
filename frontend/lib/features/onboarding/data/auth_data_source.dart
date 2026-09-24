@@ -16,7 +16,9 @@ abstract class AuthDataSource {
 class MockAuthDataSource implements AuthDataSource {
   @override
   Future<Map<String, dynamic>> signUp({
-    required String name, required String role, required String deviceId,
+    required String name,
+    required String role,
+    required String deviceId,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500)); // 로딩 확인용
     final file = role == 'PARENT' ? 'user_parent' : 'user_child';
@@ -31,11 +33,15 @@ class ApiAuthDataSource implements AuthDataSource {
 
   @override
   Future<Map<String, dynamic>> signUp({
-    required String name, required String role, required String deviceId,
+    required String name,
+    required String role,
+    required String deviceId,
   }) async {
     try {
-      final res = await _dio.post('/users',
-          data: {'name': name, 'role': role, 'deviceId': deviceId});
+      final res = await _dio.post(
+        '/users',
+        data: {'name': name, 'role': role, 'deviceId': deviceId},
+      );
       return res.data as Map<String, dynamic>;
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

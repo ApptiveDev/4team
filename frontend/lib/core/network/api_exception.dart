@@ -5,7 +5,7 @@ class ApiException implements Exception {
 
   final int? statusCode;
   final String? errorCode; // 화면 분기는 이 값으로
-  final String? traceId;   // 문의용 보관
+  final String? traceId; // 문의용 보관
 
   factory ApiException.fromDio(DioException e) {
     final data = e.response?.data;
