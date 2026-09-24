@@ -2,8 +2,26 @@ spring:
   application:
     name: backend
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: Asia/Seoul
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  auth:
+    jwt-secret: ${APP_JWT_SECRET}
+    access-token-expiration-days: ${APP_ACCESS_TOKEN_EXPIRATION_DAYS:30}

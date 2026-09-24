@@ -1,135 +1,130 @@
-# backend/AGENTS.md — Spring Boot
+# backend/AGENTS.md — Spring Boot 구현 규칙
 
-> 이 문서를 읽기 전에 루트 `../AGENTS.md`(공통 API 계약)를 먼저 읽으세요.
-> 여기는 백엔드 구현 방식, 상세 스펙, 외부 연동을 다룹니다.
+작업 전에 루트 [`../AGENTS.md`](../AGENTS.md)와 API 계약
+[`../docs/api-contract.md`](../docs/api-contract.md)을 읽는다. API 필드와 상태값은
+이 문서가 아니라 API 계약이 기준이다.
 
-## 기술 스택
+## 1. 기술 기준
 
-- Spring Boot, Gradle
-- REST API, **Controller – Service – Repository** 계층 구조, DTO/Entity 분리
-- 예외는 `@RestControllerAdvice` 공통 핸들러로 처리
-- DB: 개발은 Docker Compose PostgreSQL, 출시는 AWS RDS PostgreSQL (엔진 동일하게 유지)
-- 외부 연동: **OpenAI 단일 벤더** — STT(`gpt-transcribe`), LLM 정리(`gpt-5-mini`),
-  TTS(`gpt-4o-mini-tts`), + Cloudflare R2 (S3 호환 SDK, 스토리지만 별도)
+- Java 17, Spring Boot 3.5.x, Gradle Wrapper
+- Spring Web, Validation, Data JPA, Security
+- PostgreSQL 16
+- JWT: JJWT, HS256, access token 30일(MVP)
+- 외부 연동: OpenAI STT·LLM·TTS, Cloudflare R2
+- 시간대: 일일 배정은 `Asia/Seoul`, DB timestamp는 offset/UTC 의미가 보존되게 저장
 
-## 패키지 구조 (제안)
+JWT 원문을 User 엔티티에 저장하지 않는다. `APP_JWT_SECRET`은 32바이트 이상의
+환경변수로 주입하고 로그에 출력하지 않는다.
 
-```
-com.example.app
+## 2. 패키지 구조
+
+```text
+com.apptive.backend
 ├── domain
-│   ├── user/          (User 엔티티, 인증)
-│   ├── pair/           (Pair, 초대 코드)
-│   ├── question/       (Question, DailyAssignment)
-│   ├── recording/      (Recording, STT/LLM 처리)
-│   └── answer/         (Answer)
+│   ├── user
+│   ├── pair
+│   ├── question
+│   ├── assignment
+│   ├── recording
+│   ├── answer
+│   └── story
 ├── infra
-│   ├── stt/             (OpenAI gpt-transcribe 클라이언트)
-│   ├── llm/             (OpenAI gpt-5-mini 클라이언트)
-│   ├── tts/             (OpenAI TTS 클라이언트)
-│   └── storage/         (R2 업로드/다운로드 클라이언트)
-├── common
-│   ├── exception/       (공통 예외 핸들러)
-│   └── config/          (환경설정, Bean 등록)
-└── Application.java
+│   ├── openai
+│   └── storage
+└── common
+    ├── auth
+    ├── config
+    └── exception
 ```
 
-각 도메인 패키지 내부는 `Controller / Service / Repository / dto` 하위 구조를
-따릅니다.
+도메인 내부는 필요에 따라 `controller`, `service`, `repository`, `dto`, `entity`로
+나눈다. Entity를 API 응답으로 직접 반환하지 않는다.
 
-## 환경 변수 (.env.example)
+## 3. 구현 규칙
 
-```
-DB_URL=jdbc:postgresql://localhost:5432/app
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
+- Controller: 인증 사용자·입력 검증·HTTP 변환만 담당
+- Service: 페어 소유권, 수정 가능 여부, 공개 정책 등 업무 규칙 담당
+- Repository: 영속성만 담당
+- 모든 요청 DTO는 Bean Validation을 적용한다.
+- 예외는 `@RestControllerAdvice`에서 API 계약의 공통 에러 형식으로 변환한다.
+- `pairId`를 클라이언트가 보내게 하지 말고 인증 사용자로부터 조회한다.
+- 녹음과 답변은 `assignmentId` 기준으로 중복을 통제한다.
+- signed URL 자체를 DB에 저장하지 않고 R2 object key만 저장한다.
+- 토큰, STT 원문, signed URL query를 애플리케이션 로그에 남기지 않는다.
 
-OPENAI_API_KEY=   # STT(gpt-transcribe) + LLM 정리(gpt-5-mini) + TTS(gpt-4o-mini-tts) 전부 이 키 하나로 호출
+## 4. 인증 구현
 
-R2_ACCOUNT_ID=
-R2_ACCESS_KEY_ID=
-R2_SECRET_ACCESS_KEY=
-R2_BUCKET_NAME=
+- `POST /api/v1/users`에서 사용자 생성 후 HS256 JWT를 발급한다.
+- claim은 `sub`, `role`, `iat`, `exp`만 사용한다.
+- `/api/v1/users`, `/api/v1/health`만 공개하고 나머지는 인증을 요구한다.
+- 현재 사용자가 요청한 Pair·Assignment의 구성원인지 Service에서 다시 검사한다.
+- 동일 `deviceId + role` 가입은 기존 사용자와 새 토큰을 반환한다.
+- refresh token, 로그아웃 무효화, 기기 변경 복구는 P1이다.
 
-APP_JWT_SECRET=
-```
+## 5. 녹음 처리
 
-실제 키 값은 절대 커밋하지 말고 팀 비공개 채널(또는 GitHub Secrets)로
-공유하세요.
+API는 업로드 후 `202 Accepted`를 반환하고 프론트가 상태를 폴링하므로 MVP도
+**비동기 상태 기반 처리**로 구현한다. 메시지 브로커는 쓰지 않고 `@Async`와
+DB 상태 전이로 시작한다.
 
-## 상세 API 스펙
-
-루트 `AGENTS.md` 4장의 요약 표를 기준으로, 여기서는 구현에 필요한 세부
-사항만 추가합니다.
-
-### 공통 규칙
-
-- 성공 응답: `2xx` + JSON body
-- 실패 응답: 아래 공통 에러 포맷
-  ```json
-  { "errorCode": "RECORDING_NOT_FOUND", "message": "녹음을 찾을 수 없습니다." }
-  ```
-- 인증 실패: `401`, 페어링 안 된 사용자의 페어 전용 API 접근: `403`
-
-### `POST /recordings` 처리 흐름 (핵심 파이프라인)
-
-1. multipart로 오디오 파일 수신 → `Recording` 엔티티 생성, status=`UPLOADED`
-2. 오디오 파일을 R2에 업로드 (원본 그대로, 가공 없음) → `audioUrlOriginal` 저장
-3. `gpt-transcribe` 호출 → 성공 시 `sttText` 저장, status=`STT_DONE` / 실패 시 status=`FAILED`, `failedReason` 저장 후 **재시도 가능하게 API 별도 제공**(`POST /recordings/{id}/retry`, P1로 미뤄도 무방)
-4. `gpt-5-mini` 호출(STT 텍스트 정리) → 성공 시 `summaryText` 저장, status=`LLM_DONE`
-5. status=`READY`로 전환
-
-> MVP 기간(~10/2)에는 **동기 처리(요청-응답 안에서 순차 호출)로 단순하게
-> 구현**하는 것을 권장합니다. 비동기 큐(메시지 브로커 등)는 시간이 많이
-> 들고, 지금 규모(팀 내부 테스트)에서는 응답 지연이 크게 체감되지 않습니다.
-> `@Async` + 폴링 정도로도 충분합니다. 진짜 비동기 큐 도입은 사용자가 늘어난
-> 이후(P1)로 미루세요.
-
-### LLM 정리 프롬프트 가드레일 (중요)
-
-기획서 v2 보완안 11장 리스크 — **LLM이 없는 사실을 지어내면 안 됩니다.**
-프롬프트에 반드시 다음을 포함하세요:
-
-```
-아래는 어르신이 음성으로 답한 내용을 받아쓴 텍스트입니다.
-문장을 자연스럽게 다듬고 군더더기(어, 음 등)만 정리하세요.
-원문에 없는 사실, 날짜, 지명, 감정 묘사를 새로 추가하지 마세요.
+```text
+UPLOADED
+  → STT_PROCESSING → STT_DONE
+  → LLM_PROCESSING → READY
+  → 실패 시 FAILED
 ```
 
-정리본(`summaryText`)은 항상 원본(`sttText`, `audioUrlOriginal`)과 함께
-저장되어야 하며, 프론트는 원본을 기본으로 노출합니다(정리본은 보조).
+1. m4a/AAC, 1~60초, 최대 10 MiB인지 검증한다.
+2. R2 비공개 bucket에 원본을 먼저 저장한다.
+3. 저장 성공 시 부모 제출 상태는 `SUBMITTED`가 된다.
+4. STT와 LLM을 순차 처리하되 실패해도 원본과 제출 상태를 보존한다.
+5. 조회 시에만 짧은 만료 시간의 signed URL을 생성한다.
+6. 같은 assignment의 재녹음은 새 파일 저장 성공 후 이전 파일을 교체한다.
 
-### `GET /today` 공개 판단 로직
+LLM은 받아쓰기 내용을 자연스럽게 정리하되 원문에 없는 사실·날짜·지명·감정을
+추가하지 않는다. `sttText`, `summaryText`, 원본 object key는 별도로 보존한다.
 
-```java
-boolean revealed = recording.getStatus() == READY && answer.getStatus() == SUBMITTED;
+## 6. 자녀 답변 TTS
+
+- 자녀 답변 저장 후 비동기로 생성하고 결과를 캐싱한다.
+- `GET /answers/{id}/audio`는 조회만 하며 GET 요청에서 생성 작업을 시작하지 않는다.
+- TTS 실패는 텍스트 답변 제출과 공개를 실패 처리하지 않는다.
+- 질문 안내 TTS는 런타임 요청마다 만들지 않고 seed/질문 등록 시 사전 생성한다.
+
+## 7. 환경변수
+
+전체 예시는 [`.env.example`](.env.example)을 사용한다. Spring Boot는 `.env`
+파일을 자동으로 읽지 않으므로 README의 방식대로 셸 환경 또는 IDE Run
+Configuration으로 주입한다.
+
+필수값:
+
+- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`
+- `APP_JWT_SECRET`
+- `OPENAI_API_KEY`
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`
+
+## 8. 10/2 구현 순서
+
+| 우선순위 | 범위 | 프론트 연동 기준 |
+|---|---|---|
+| P0-1 | 실행 환경, Security, 공통 예외, `GET /health` | 앱에서 서버 연결 확인 |
+| P0-2 | User/JWT, Pair/초대 코드 | 가입·페어링 화면 연동 |
+| P0-3 | Question/Assignment, `GET /today` | 홈 화면 연동 |
+| P0-4 | 자녀 답변, 공개 상태 계산 | 자녀 답변·대기 화면 연동 |
+| P0-5 | 녹음 업로드·폴링(Mock 처리 우선) | 부모 녹음 전체 흐름 연동 |
+| P0-6 | R2, STT, LLM | 실제 음성 처리 연동 |
+| P0-7 | TTS, 지난 이야기 | 재생·보관함 연동 |
+
+외부 AI 연동 전에 Mock 상태 전이로 전체 API 흐름을 먼저 완성한다.
+
+## 9. 테스트 최소 기준
+
+- Service: 역할·소유권·중복 제출·공개 조건
+- Controller: validation, 401/403/404/409, 공통 에러 JSON
+- Recording: 허용 형식·크기·길이, 상태 전이, AI 실패 시 원본 보존
+- Repository: assignment당 활성 답변/녹음 중복 방지
+
+```bash
+./gradlew test
 ```
-둘 중 하나라도 아직이면 `revealed=false`로 응답하고, 요청한 사용자 자신의
-제출물만 내려줍니다(상대방 것은 아직 노출하지 않음).
-
-### 질문 음성 사전 생성 (FR-22)
-
-질문 세트는 유한하므로, **런타임에 TTS를 호출하지 않습니다.** 별도
-배치 스크립트(또는 `@Component` + `CommandLineRunner`)로 신규 질문이 추가될
-때마다 TTS를 미리 생성해 R2에 저장하고, `Question.audioUrl`에 그 URL을
-채워둡니다. 이렇게 하면 7장 비용 시뮬레이션의 TTS 비용 항목이 거의 사라집니다.
-
-## 일자별 계획 (백엔드 전용, 9/23 ~ 10/2)
-
-| 날짜 | 작업 |
-|---|---|
-| 9/23 (오늘) | 저장소/Gradle 프로젝트 스캐폴드, Docker Compose(PostgreSQL) 세팅, ERD 초안 확정, API 계약 리뷰 |
-| 9/24 | `User`/`Pair` 엔티티, 간편 인증(이름+역할+기기토큰), `POST /users` |
-| 9/25 | `POST /pairs/invite`, `POST /pairs/join`, `Question`/`DailyAssignment` 시드 + `GET /questions/today` |
-| 9/26 | `POST /recordings` (R2 업로드까지), `Recording` 상태 필드, `GET /recordings/{id}` |
-| 9/27 | `gpt-transcribe` 연동(STT_DONE), `gpt-5-mini` 연동(LLM_DONE, 가드레일 프롬프트 적용) — 같은 OpenAI SDK/키 재사용이라 연동 자체는 더 간단해질 것 |
-| 9/28 | `POST /answers`, `GET /today` 공개 판단 로직 |
-| 9/29 | `GET /answers/{id}/audio` (자녀 답변 TTS 낭독, 캐싱), 질문 음성 사전 생성 배치 스크립트 |
-| 9/30 | `GET /stories` 보관함(페이지네이션), 프론트와 전체 루프 통합 테스트 |
-| 10/1 | 에러 케이스(STT 실패, 재시도), 로깅/모니터링 최소 세팅 |
-| 10/2 | 최종 점검, 배포 환경(스테이징) 확인 |
-
-## 이슈 대응
-
-프론트에서 API 스펙 관련 GitHub Issue가 올라오면, 루트 `AGENTS.md`의 "이슈
-처리 프로세스"를 따르세요. 이 문서(백엔드 상세 스펙)를 고쳐야 하는 변경이면
-루트 `AGENTS.md`도 함께 갱신합니다(둘이 어긋나면 안 됩니다).
