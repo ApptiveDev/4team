@@ -1,18 +1,23 @@
 package com.apptive.backend.common.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 
+import com.apptive.backend.common.auth.JwtAuthenticationFilter;
+import com.apptive.backend.common.auth.JwtProperties;
+import com.apptive.backend.common.auth.JwtTokenProvider;
 import com.apptive.backend.common.auth.RestAccessDeniedHandler;
 import com.apptive.backend.common.auth.RestAuthenticationEntryPoint;
 import com.apptive.backend.common.web.TraceIdFilter;
 
 @Configuration
+@EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
 
 	@Bean
@@ -20,10 +25,16 @@ public class SecurityConfig {
 		HttpSecurity http,
 		RestAuthenticationEntryPoint authenticationEntryPoint,
 		RestAccessDeniedHandler accessDeniedHandler,
-		TraceIdFilter traceIdFilter
+		JwtTokenProvider jwtTokenProvider
 	) throws Exception {
+		TraceIdFilter traceIdFilter = new TraceIdFilter();
+		JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(
+			jwtTokenProvider,
+			authenticationEntryPoint
+		);
 		http
 			.addFilterBefore(traceIdFilter, SecurityContextHolderFilter.class)
+			.addFilterAfter(jwtAuthenticationFilter, SecurityContextHolderFilter.class)
 			.csrf(csrf -> csrf.disable())
 			.formLogin(form -> form.disable())
 			.httpBasic(basic -> basic.disable())
@@ -34,6 +45,8 @@ public class SecurityConfig {
 			.authorizeHttpRequests(authorize -> authorize
 				.requestMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/v1/pairs/invitations").hasRole("CHILD")
+				.requestMatchers(HttpMethod.POST, "/api/v1/pairs/join").hasRole("PARENT")
 				.anyRequest().authenticated());
 
 		return http.build();

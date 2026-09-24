@@ -32,15 +32,18 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 		HttpServletResponse response,
 		AuthenticationException authException
 	) throws IOException {
-		response.setStatus(ErrorCode.UNAUTHORIZED.status().value());
+		ErrorCode errorCode = request.getAttribute(JwtAuthenticationFilter.AUTH_ERROR_ATTRIBUTE) instanceof ErrorCode code
+			? code
+			: ErrorCode.UNAUTHORIZED;
+		response.setStatus(errorCode.status().value());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		response.setCharacterEncoding("UTF-8");
 		objectMapper.writeValue(
 			response.getOutputStream(),
 			apiErrorFactory.create(
 				request,
-				ErrorCode.UNAUTHORIZED,
-				ErrorCode.UNAUTHORIZED.message(),
+				errorCode,
+				errorCode.message(),
 				List.of()
 			)
 		);
