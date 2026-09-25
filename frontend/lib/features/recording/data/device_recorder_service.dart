@@ -23,9 +23,11 @@ class DeviceRecorderService implements RecorderService {
   @override
   Future<void> start() async {
     await discard();
-    final temporary = await getTemporaryDirectory();
-    _directory = await Directory('${temporary.path}/parent_recording_')
-        .createTemp();
+    // 캐시가 비워져 임시 폴더 자체가 없을 수 있으므로 먼저 만든다.
+    final temporary = await (await getTemporaryDirectory()).create(
+      recursive: true,
+    );
+    _directory = await temporary.createTemp('parent_recording_');
     await _recorder.start(
       const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
       path: '${_directory!.path}/answer.m4a',
