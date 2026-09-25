@@ -16,6 +16,8 @@ class SignUpController extends Notifier<AsyncValue<AppUser?>> {
       () => ref.read(authRepositoryProvider).signUp(name: name, role: role),
     );
     if (!ref.mounted) return;
+    // 새로 저장된 사용자로 다시 읽게 한다 (페어링·첫 화면 분기에서 사용)
+    if (result.hasValue) ref.invalidate(currentUserProvider);
     state = result;
   }
 }
