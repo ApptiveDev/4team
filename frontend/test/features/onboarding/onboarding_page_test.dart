@@ -6,8 +6,10 @@ import 'package:life_record/app/app.dart';
 import 'package:life_record/core/network/api_exception.dart';
 import 'package:life_record/features/onboarding/data/auth_providers.dart';
 import 'package:life_record/features/pairing/data/pairing_providers.dart';
+import 'package:life_record/features/today/data/today_providers.dart';
 
 import '../pairing/fake_pairing_data_source.dart';
+import '../today/today_fixtures.dart';
 import 'fake_auth_data_source.dart';
 
 Future<void> _pumpApp(
@@ -20,6 +22,9 @@ Future<void> _pumpApp(
         authDataSourceProvider.overrideWithValue(dataSource),
         pairingDataSourceProvider.overrideWithValue(
           FakePairingDataSource(pairedAfterChecks: 99),
+        ),
+        todayDataSourceProvider.overrideWithValue(
+          FakeTodayDataSource(json: todayFixture('waiting_for_both')),
         ),
       ],
       child: const App(),
@@ -90,7 +95,7 @@ void main() {
     await tester.tap(find.text('시작하기'));
     await tester.pumpAndSettle();
 
-    expect(find.text('오늘 질문'), findsOneWidget);
+    expect(find.text('어릴 때 가장 좋아했던 놀이는 무엇이었나요?'), findsOneWidget);
   });
 
   testWidgets('서버가 400을 주면 안내하고 입력한 이름을 유지한다', (tester) async {
