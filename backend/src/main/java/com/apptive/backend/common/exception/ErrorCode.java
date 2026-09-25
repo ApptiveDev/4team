@@ -7,7 +7,9 @@ public enum ErrorCode {
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
 	TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "인증 토큰이 만료되었습니다."),
 	ROLE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "해당 역할로는 요청할 수 없습니다."),
+	PAIR_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 가족의 질문에 접근할 수 없습니다."),
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
+	ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "배정된 질문을 찾을 수 없습니다."),
 	INVITE_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "초대 코드를 찾을 수 없습니다."),
 	TODAY_ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "오늘 배정된 질문을 찾을 수 없습니다."),
 	RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "요청한 리소스를 찾을 수 없습니다."),
@@ -15,6 +17,7 @@ public enum ErrorCode {
 	PAIR_NOT_FOUND(HttpStatus.CONFLICT, "페어링된 사용자를 찾을 수 없습니다."),
 	INVITE_CODE_USED(HttpStatus.CONFLICT, "이미 사용된 초대 코드입니다."),
 	INVITE_CODE_EXPIRED(HttpStatus.CONFLICT, "만료된 초대 코드입니다."),
+	ANSWER_LOCKED(HttpStatus.CONFLICT, "공개된 답변은 수정할 수 없습니다."),
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부 오류가 발생했습니다.");
 
 	private final HttpStatus status;
