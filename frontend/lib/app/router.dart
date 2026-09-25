@@ -7,6 +7,7 @@ import '../features/pairing/presentation/pairing_page.dart';
 import '../core/config/app_config.dart';
 import '../features/child_answer/presentation/child_answer_args.dart';
 import '../features/child_answer/presentation/child_answer_page.dart';
+import '../features/stories/presentation/stories_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -39,7 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ), // C
       GoRoute(
         path: '/stories',
-        builder: (context, state) => const PlaceholderPage(title: '지난 이야기'),
+        builder: (context, state) => const StoriesPage(),
       ), // C
     ],
   );
