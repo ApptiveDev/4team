@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/network/retry_policy.dart';
 import '../data/pairing_providers.dart';
 import '../domain/pairing_repository.dart';
 
 /// 자녀 화면에 보여줄 초대 코드
 final invitationProvider = FutureProvider.autoDispose<Invitation>(
   (ref) => ref.read(pairingRepositoryProvider).createInvitation(),
+  retry: retryTransientOnly,
 );
 
 /// 부모의 코드 입력 요청 상태. 연결에 성공하면 true.

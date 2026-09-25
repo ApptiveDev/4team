@@ -250,7 +250,7 @@ class _ParentJoinViewState extends ConsumerState<_ParentJoinView> {
       children: [
         Text('자녀와 연결해요', style: theme.textTheme.headlineMedium),
         const SizedBox(height: 12),
-        Text('자녀에게 받은 숫자 6자리를 입력해 주세요.', style: theme.textTheme.bodyLarge),
+        Text('자녀에게 받은\n숫자 6자리를 입력해 주세요.', style: theme.textTheme.bodyLarge),
         const SizedBox(height: 32),
         TextField(
           controller: _code,

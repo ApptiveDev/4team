@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../today/presentation/today_provider.dart';
 import '../data/child_answer_providers.dart';
 import '../domain/answer_validator.dart';
 import '../domain/child_answer.dart';
@@ -64,10 +65,13 @@ class ChildAnswerController extends Notifier<ChildAnswerSubmitState> {
         status: SubmitStatus.success,
         result: answer,
       );
-      // TODO(C): A의 today provider가 생기면 여기서 invalidate 해 홈을 갱신한다.
+      // 홈이 새 제출 상태를 다시 불러오게 한다 ("홈으로"는 go라서 홈 화면이 재사용됨)
+      ref.invalidate(todayProvider);
     } on ApiException catch (e) {
       if (!ref.mounted) return;
       state = _failureFrom(e);
+      // 이미 공개된 답이면 화면이 홈으로 보내므로 홈도 공개 상태로 갱신
+      if (state.isLocked) ref.invalidate(todayProvider);
     } catch (_) {
       if (!ref.mounted) return;
       state = ChildAnswerSubmitState(
