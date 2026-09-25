@@ -8,9 +8,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -61,6 +64,45 @@ public class GlobalExceptionHandler {
 			request,
 			ErrorCode.VALIDATION_ERROR,
 			ErrorCode.VALIDATION_ERROR.message(),
+			List.of()
+		));
+	}
+
+	@ExceptionHandler(MissingServletRequestPartException.class)
+	public ResponseEntity<ApiErrorResponse> handleMissingRequestPart(
+		MissingServletRequestPartException exception,
+		HttpServletRequest request
+	) {
+		return ResponseEntity.badRequest().body(apiErrorFactory.create(
+			request,
+			ErrorCode.VALIDATION_ERROR,
+			ErrorCode.VALIDATION_ERROR.message(),
+			List.of(new FieldErrorResponse(exception.getRequestPartName(), "required"))
+		));
+	}
+
+	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+	public ResponseEntity<ApiErrorResponse> handleUnsupportedMediaType(
+		HttpMediaTypeNotSupportedException exception,
+		HttpServletRequest request
+	) {
+		return ResponseEntity.badRequest().body(apiErrorFactory.create(
+			request,
+			ErrorCode.INVALID_AUDIO_FORMAT,
+			ErrorCode.INVALID_AUDIO_FORMAT.message(),
+			List.of()
+		));
+	}
+
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public ResponseEntity<ApiErrorResponse> handleMaxUploadSize(
+		MaxUploadSizeExceededException exception,
+		HttpServletRequest request
+	) {
+		return ResponseEntity.status(ErrorCode.AUDIO_FILE_TOO_LARGE.status()).body(apiErrorFactory.create(
+			request,
+			ErrorCode.AUDIO_FILE_TOO_LARGE,
+			ErrorCode.AUDIO_FILE_TOO_LARGE.message(),
 			List.of()
 		));
 	}
