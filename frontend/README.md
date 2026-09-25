@@ -96,11 +96,10 @@ lib/
 | `/pairing` | 페어링 | A 박강현 |
 | `/today` | 오늘 질문 | A 박강현 |
 | `/recording` | 부모 녹음 | B Yin Min Aye |
+| `/parent-answer` | 부모의 자녀 답변 확인·TTS 듣기 | B Yin Min Aye |
 | `/child-answer` | 자녀 답변 | C 정우영 |
 | `/stories` | 지난 이야기 | C 정우영 |
 
-현재는 모두 `PlaceholderPage`입니다. 각 담당자가 `router.dart`의 `builder`만 자기 화면으로 교체합니다.
-부모의 자녀 답변 확인(B)과 자녀의 부모 답변 확인(C)처럼 아직 없는 경로는 담당자가 추가합니다.
 전체 역할 분담은 [`AGENTS.md`](AGENTS.md) 8장을 따릅니다.
 
 ## Mock 데이터
@@ -116,6 +115,10 @@ lib/
 | `today_revealed.json` | 5.4 공개 후 |
 | `recording_processing.json` | 5.6 처리 중 |
 | `recording_failed.json` | 5.6 실패 |
+| `recording_uploaded.json` | 5.5 업로드 접수 |
+| `recording_ready.json` | 5.6 변형 (처리 완료) |
+| `today_parent_revealed.json` | 5.4 변형 (부모 관점 공개 답변) |
+| `answer_audio_ready.json` | 5.8 TTS 준비 완료 |
 | `stories_first_page.json` | 5.9 지난 이야기 |
 
 - 필드명과 enum 값은 계약 문서와 정확히 일치해야 합니다.
