@@ -47,6 +47,7 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/v1/pairs/invitations").hasRole("CHILD")
 				.requestMatchers(HttpMethod.POST, "/api/v1/pairs/join").hasRole("PARENT")
+				.requestMatchers(HttpMethod.PUT, "/api/v1/assignments/*/child-answer").hasRole("CHILD")
 				.anyRequest().authenticated());
 
 		return http.build();
