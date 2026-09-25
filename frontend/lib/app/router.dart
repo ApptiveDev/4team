@@ -3,16 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/widgets/placeholder_page.dart';
+import '../features/parent_answer/presentation/parent_answer_page.dart';
+import '../features/recording/presentation/recording_args.dart';
+import '../features/recording/presentation/recording_page.dart';
+import 'parent_only_page.dart';
 import '../features/onboarding/presentation/onboarding_page.dart';
 import '../features/pairing/presentation/pairing_page.dart';
 import '../features/today/presentation/today_page.dart';
 import '../core/config/app_config.dart';
 import '../features/child_answer/presentation/child_answer_args.dart';
 import '../features/child_answer/presentation/child_answer_page.dart';
-import '../features/recording/presentation/recording_args.dart';
-import '../features/recording/presentation/recording_page.dart';
-import '../features/parent_answer/presentation/parent_answer_page.dart';
-import 'parent_only_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   const demo = String.fromEnvironment('PART_B_DEMO');
