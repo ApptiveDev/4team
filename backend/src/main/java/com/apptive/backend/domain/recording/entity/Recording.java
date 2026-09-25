@@ -48,6 +48,9 @@ public class Recording {
 	@Column(name = "idempotency_key", length = 100)
 	private String idempotencyKey;
 
+	@Column(name = "processing_version", length = 36, nullable = false)
+	private String processingVersion;
+
 	@Enumerated(EnumType.STRING)
 	@Column(name = "processing_status", length = 30, nullable = false)
 	private ProcessingStatus processingStatus;
@@ -84,11 +87,12 @@ public class Recording {
 		String contentType,
 		long sizeBytes,
 		String idempotencyKey,
+		String processingVersion,
 		OffsetDateTime now
 	) {
 		this.id = id;
 		this.assignment = assignment;
-		replaceFile(objectKey, originalFilename, contentType, sizeBytes, idempotencyKey, now);
+		replaceFile(objectKey, originalFilename, contentType, sizeBytes, idempotencyKey, processingVersion, now);
 	}
 
 	public void replaceFile(
@@ -97,6 +101,7 @@ public class Recording {
 		String contentType,
 		long sizeBytes,
 		String idempotencyKey,
+		String processingVersion,
 		OffsetDateTime now
 	) {
 		this.objectKey = objectKey;
@@ -104,6 +109,7 @@ public class Recording {
 		this.contentType = contentType;
 		this.sizeBytes = sizeBytes;
 		this.idempotencyKey = idempotencyKey;
+		this.processingVersion = processingVersion;
 		this.processingStatus = ProcessingStatus.UPLOADED;
 		this.sttText = null;
 		this.summaryText = null;
@@ -111,6 +117,36 @@ public class Recording {
 		this.failureCode = null;
 		this.processingNotice = null;
 		this.submittedAt = now;
+		this.updatedAt = now;
+	}
+
+	public void markSttProcessing(OffsetDateTime now) {
+		this.processingStatus = ProcessingStatus.STT_PROCESSING;
+		this.updatedAt = now;
+	}
+
+	public void markSttDone(String sttText, OffsetDateTime now) {
+		this.sttText = sttText;
+		this.processingStatus = ProcessingStatus.STT_DONE;
+		this.updatedAt = now;
+	}
+
+	public void markLlmProcessing(OffsetDateTime now) {
+		this.processingStatus = ProcessingStatus.LLM_PROCESSING;
+		this.updatedAt = now;
+	}
+
+	public void markReady(String summaryText, OffsetDateTime now) {
+		this.summaryText = summaryText;
+		this.processingStatus = ProcessingStatus.READY;
+		this.updatedAt = now;
+	}
+
+	public void markFailed(String failedStage, String failureCode, String notice, OffsetDateTime now) {
+		this.failedStage = failedStage;
+		this.failureCode = failureCode;
+		this.processingNotice = notice;
+		this.processingStatus = ProcessingStatus.FAILED;
 		this.updatedAt = now;
 	}
 
@@ -140,6 +176,10 @@ public class Recording {
 
 	public String getIdempotencyKey() {
 		return idempotencyKey;
+	}
+
+	public String getProcessingVersion() {
+		return processingVersion;
 	}
 
 	public ProcessingStatus getProcessingStatus() {

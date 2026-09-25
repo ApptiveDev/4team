@@ -1,6 +1,7 @@
 package com.apptive.backend.domain.recording.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -144,6 +145,58 @@ class RecordingControllerTest {
 			.andExpect(jsonPath("$.submittedAt").value(firstBody.get("submittedAt").asText()));
 
 		org.assertj.core.api.Assertions.assertThat(recordingRepository.count()).isEqualTo(1);
+	}
+
+	@Test
+	void parentCanPollUploadedRecording() throws Exception {
+		MvcResult uploaded = upload(parent, assignment.getId(), validAudio("answer.m4a"), "poll-upload")
+			.andExpect(status().isAccepted())
+			.andReturn();
+		String recordingId = objectMapper.readTree(uploaded.getResponse().getContentAsByteArray())
+			.get("recordingId").asText();
+
+		mockMvc.perform(get("/api/v1/recordings/{recordingId}", recordingId)
+				.header("Authorization", bearer(parent)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.recordingId").value(recordingId))
+			.andExpect(jsonPath("$.assignmentId").value(assignment.getId()))
+			.andExpect(jsonPath("$.processingStatus").value("UPLOADED"))
+			.andExpect(jsonPath("$.sttText").isEmpty())
+			.andExpect(jsonPath("$.summaryText").isEmpty());
+	}
+
+	@Test
+	void childAndAnotherParentCannotPollRecording() throws Exception {
+		MvcResult uploaded = upload(parent, assignment.getId(), validAudio("answer.m4a"), "poll-auth")
+			.andExpect(status().isAccepted())
+			.andReturn();
+		String recordingId = objectMapper.readTree(uploaded.getResponse().getContentAsByteArray())
+			.get("recordingId").asText();
+
+		mockMvc.perform(get("/api/v1/recordings/{recordingId}", recordingId)
+				.header("Authorization", bearer(child)))
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.errorCode").value("ROLE_NOT_ALLOWED"));
+
+		User anotherParent = userRepository.save(new User(
+			"usr_recording_poll_other",
+			"다른 부모",
+			Role.PARENT,
+			"recording-poll-other",
+			OffsetDateTime.now(clock)
+		));
+		mockMvc.perform(get("/api/v1/recordings/{recordingId}", recordingId)
+				.header("Authorization", bearer(anotherParent)))
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.errorCode").value("PAIR_ACCESS_DENIED"));
+	}
+
+	@Test
+	void missingRecordingReturnsNotFound() throws Exception {
+		mockMvc.perform(get("/api/v1/recordings/rec_missing")
+				.header("Authorization", bearer(parent)))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.errorCode").value("RECORDING_NOT_FOUND"));
 	}
 
 	@Test

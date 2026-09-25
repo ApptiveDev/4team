@@ -13,3 +13,5 @@ app:
   auth:
     jwt-secret: test-only-jwt-secret-at-least-32-bytes
     access-token-expiration-days: 30
+  recording:
+    mock-processing-delay-ms: 5

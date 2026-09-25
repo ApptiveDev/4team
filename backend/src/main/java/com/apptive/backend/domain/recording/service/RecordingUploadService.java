@@ -3,8 +3,10 @@ package com.apptive.backend.domain.recording.service;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +34,7 @@ public class RecordingUploadService {
 	private final AudioFileValidator audioFileValidator;
 	private final IdGenerator idGenerator;
 	private final Clock clock;
+	private final ApplicationEventPublisher eventPublisher;
 
 	public RecordingUploadService(
 		AssignmentRepository assignmentRepository,
@@ -40,7 +43,8 @@ public class RecordingUploadService {
 		RecordingStorage recordingStorage,
 		AudioFileValidator audioFileValidator,
 		IdGenerator idGenerator,
-		Clock clock
+		Clock clock,
+		ApplicationEventPublisher eventPublisher
 	) {
 		this.assignmentRepository = assignmentRepository;
 		this.recordingRepository = recordingRepository;
@@ -49,6 +53,7 @@ public class RecordingUploadService {
 		this.audioFileValidator = audioFileValidator;
 		this.idGenerator = idGenerator;
 		this.clock = clock;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -83,6 +88,7 @@ public class RecordingUploadService {
 		String newObjectKey = recordingStorage.store(recordingId, audioFile);
 		String previousObjectKey = existing == null ? null : existing.getObjectKey();
 		OffsetDateTime now = OffsetDateTime.now(clock);
+		String processingVersion = UUID.randomUUID().toString();
 
 		try {
 			Recording recording;
@@ -95,6 +101,7 @@ public class RecordingUploadService {
 					audioFile.getContentType(),
 					audioFile.getSize(),
 					normalizedKey,
+					processingVersion,
 					now
 				);
 			} else {
@@ -104,6 +111,7 @@ public class RecordingUploadService {
 					audioFile.getContentType(),
 					audioFile.getSize(),
 					normalizedKey,
+					processingVersion,
 					now
 				);
 				recording = existing;
@@ -112,6 +120,7 @@ public class RecordingUploadService {
 			if (previousObjectKey != null && !previousObjectKey.equals(newObjectKey)) {
 				recordingStorage.delete(previousObjectKey);
 			}
+			eventPublisher.publishEvent(new RecordingUploadedEvent(saved.getId(), processingVersion));
 			return toResponse(saved);
 		} catch (RuntimeException exception) {
 			recordingStorage.delete(newObjectKey);
