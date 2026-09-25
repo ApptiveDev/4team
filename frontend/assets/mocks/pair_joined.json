@@ -1,0 +1,14 @@
+{
+  "pair": {
+    "id": "pair_01J8M8P8WTTDQMK99PQK7TGJE8",
+    "parent": {
+      "id": "usr_parent_123",
+      "name": "김영희"
+    },
+    "child": {
+      "id": "usr_child_456",
+      "name": "김민지"
+    },
+    "pairedAt": "2026-09-24T09:15:00+09:00"
+  }
+}

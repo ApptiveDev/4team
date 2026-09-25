@@ -39,6 +39,13 @@ class AppUser {
 
   bool get isPaired => pairingStatus == PairingStatus.paired;
 
+  AppUser copyWith({PairingStatus? pairingStatus}) => AppUser(
+    id: id,
+    name: name,
+    role: role,
+    pairingStatus: pairingStatus ?? this.pairingStatus,
+  );
+
   // API 계약 5.1 `user` 객체와 같은 모양. 기기 저장에도 그대로 쓴다.
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
     id: json['id'] as String,

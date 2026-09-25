@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:life_record/app/app.dart';
 import 'package:life_record/core/network/api_exception.dart';
 import 'package:life_record/features/onboarding/data/auth_providers.dart';
+import 'package:life_record/features/pairing/data/pairing_providers.dart';
 
+import '../pairing/fake_pairing_data_source.dart';
 import 'fake_auth_data_source.dart';
 
 Future<void> _pumpApp(
@@ -14,7 +16,12 @@ Future<void> _pumpApp(
 ) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [authDataSourceProvider.overrideWithValue(dataSource)],
+      overrides: [
+        authDataSourceProvider.overrideWithValue(dataSource),
+        pairingDataSourceProvider.overrideWithValue(
+          FakePairingDataSource(pairedAfterChecks: 99),
+        ),
+      ],
       child: const App(),
     ),
   );
@@ -64,10 +71,13 @@ void main() {
     await tester.enterText(find.byType(TextField), '김민지');
     await tester.pump();
     await tester.tap(find.text('시작하기'));
-    await tester.pumpAndSettle();
+    // 페어링 화면은 연결 대기 표시가 계속 돌아서 pumpAndSettle 대신 시간을 넘긴다
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 300));
+    }
 
     expect(dataSource.requests.single['role'], 'CHILD');
-    expect(find.text('페어링'), findsOneWidget);
+    expect(find.text('부모님을 초대해 주세요'), findsOneWidget);
   });
 
   testWidgets('이미 연결된 사용자는 오늘 질문으로 이동한다', (tester) async {
