@@ -11,9 +11,13 @@ import com.apptive.backend.common.auth.AuthenticatedUser;
 import com.apptive.backend.common.exception.ApiException;
 import com.apptive.backend.common.exception.ErrorCode;
 import com.apptive.backend.common.id.IdGenerator;
+import com.apptive.backend.domain.answer.entity.ChildAnswer;
+import com.apptive.backend.domain.answer.repository.ChildAnswerRepository;
+import com.apptive.backend.domain.assignment.dto.TodayAnswerResponse;
 import com.apptive.backend.domain.assignment.dto.TodayAssignmentResponse;
 import com.apptive.backend.domain.assignment.dto.TodayQuestionResponse;
 import com.apptive.backend.domain.assignment.dto.TodayResponse;
+import com.apptive.backend.domain.assignment.dto.TextTodayAnswerResponse;
 import com.apptive.backend.domain.assignment.entity.Assignment;
 import com.apptive.backend.domain.assignment.entity.RevealStatus;
 import com.apptive.backend.domain.assignment.entity.SubmissionStatus;
@@ -22,6 +26,7 @@ import com.apptive.backend.domain.pair.entity.FamilyPair;
 import com.apptive.backend.domain.pair.repository.FamilyPairRepository;
 import com.apptive.backend.domain.question.entity.Question;
 import com.apptive.backend.domain.question.repository.QuestionRepository;
+import com.apptive.backend.domain.user.entity.Role;
 
 @Service
 public class TodayService {
@@ -29,6 +34,8 @@ public class TodayService {
 	private final FamilyPairRepository familyPairRepository;
 	private final AssignmentRepository assignmentRepository;
 	private final QuestionRepository questionRepository;
+	private final ChildAnswerRepository childAnswerRepository;
+	private final RevealPolicy revealPolicy;
 	private final IdGenerator idGenerator;
 	private final Clock clock;
 
@@ -36,12 +43,16 @@ public class TodayService {
 		FamilyPairRepository familyPairRepository,
 		AssignmentRepository assignmentRepository,
 		QuestionRepository questionRepository,
+		ChildAnswerRepository childAnswerRepository,
+		RevealPolicy revealPolicy,
 		IdGenerator idGenerator,
 		Clock clock
 	) {
 		this.familyPairRepository = familyPairRepository;
 		this.assignmentRepository = assignmentRepository;
 		this.questionRepository = questionRepository;
+		this.childAnswerRepository = childAnswerRepository;
+		this.revealPolicy = revealPolicy;
 		this.idGenerator = idGenerator;
 		this.clock = clock;
 	}
@@ -72,6 +83,23 @@ public class TodayService {
 
 	private TodayResponse toResponse(Assignment assignment, AuthenticatedUser authenticatedUser) {
 		Question question = assignment.getQuestion();
+		ChildAnswer childAnswer = childAnswerRepository.findByAssignment_Id(assignment.getId()).orElse(null);
+		SubmissionStatus parentStatus = SubmissionStatus.NOT_SUBMITTED;
+		SubmissionStatus childStatus = childAnswer == null
+			? SubmissionStatus.NOT_SUBMITTED
+			: SubmissionStatus.SUBMITTED;
+		RevealStatus revealStatus = revealPolicy.resolve(parentStatus, childStatus);
+		boolean revealed = revealStatus == RevealStatus.REVEALED;
+		TodayAnswerResponse myAnswer = authenticatedUser.role() == Role.CHILD
+			&& childAnswer != null
+			? TextTodayAnswerResponse.from(childAnswer)
+			: null;
+		TodayAnswerResponse partnerAnswer = authenticatedUser.role() == Role.PARENT
+			&& revealed
+			&& childAnswer != null
+			? TextTodayAnswerResponse.from(childAnswer)
+			: null;
+
 		return new TodayResponse(
 			new TodayAssignmentResponse(
 				assignment.getId(),
@@ -84,11 +112,12 @@ public class TodayService {
 				)
 			),
 			authenticatedUser.role(),
-			SubmissionStatus.NOT_SUBMITTED,
-			SubmissionStatus.NOT_SUBMITTED,
-			RevealStatus.WAITING_FOR_BOTH,
-			false,
-			null
+			parentStatus,
+			childStatus,
+			revealStatus,
+			revealed,
+			myAnswer,
+			partnerAnswer
 		);
 	}
 }

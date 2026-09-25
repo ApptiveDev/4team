@@ -19,6 +19,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.apptive.backend.common.auth.JwtTokenProvider;
+import com.apptive.backend.domain.answer.entity.ChildAnswer;
+import com.apptive.backend.domain.answer.entity.TtsStatus;
+import com.apptive.backend.domain.answer.repository.ChildAnswerRepository;
+import com.apptive.backend.domain.assignment.entity.Assignment;
 import com.apptive.backend.domain.assignment.repository.AssignmentRepository;
 import com.apptive.backend.domain.pair.entity.FamilyPair;
 import com.apptive.backend.domain.pair.repository.FamilyPairRepository;
@@ -40,6 +44,9 @@ class TodayControllerTest {
 
 	@Autowired
 	private JwtTokenProvider tokenProvider;
+
+	@Autowired
+	private ChildAnswerRepository childAnswerRepository;
 
 	@Autowired
 	private AssignmentRepository assignmentRepository;
@@ -64,6 +71,7 @@ class TodayControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		childAnswerRepository.deleteAll();
 		assignmentRepository.deleteAll();
 		invitationRepository.deleteAll();
 		familyPairRepository.deleteAll();
@@ -86,6 +94,44 @@ class TodayControllerTest {
 			));
 		question.updateFromSeed(today, "오늘의 테스트 질문은 무엇인가요?", "TEST", null, true);
 		questionRepository.save(question);
+	}
+
+	@Test
+	void childAnswerAppearsAsMyAnswerAndWaitsForParent() throws Exception {
+		mockMvc.perform(get("/api/v1/today")
+				.header("Authorization", bearer(child)))
+			.andExpect(status().isOk());
+		Assignment assignment = assignmentRepository.findAll().get(0);
+		OffsetDateTime now = OffsetDateTime.now(clock);
+		childAnswerRepository.save(new ChildAnswer(
+			"ans_today_child",
+			assignment,
+			"오늘은 함께 산책하고 싶어요.",
+			TtsStatus.PROCESSING,
+			now,
+			now
+		));
+
+		mockMvc.perform(get("/api/v1/today")
+				.header("Authorization", bearer(child)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.parentSubmissionStatus").value("NOT_SUBMITTED"))
+			.andExpect(jsonPath("$.childSubmissionStatus").value("SUBMITTED"))
+			.andExpect(jsonPath("$.revealStatus").value("WAITING_FOR_PARENT"))
+			.andExpect(jsonPath("$.canViewPartnerAnswer").value(false))
+			.andExpect(jsonPath("$.myAnswer.type").value("TEXT"))
+			.andExpect(jsonPath("$.myAnswer.answerId").value("ans_today_child"))
+			.andExpect(jsonPath("$.myAnswer.text").value("오늘은 함께 산책하고 싶어요."))
+			.andExpect(jsonPath("$.myAnswer.ttsStatus").value("PROCESSING"))
+			.andExpect(jsonPath("$.partnerAnswer").doesNotExist());
+
+		mockMvc.perform(get("/api/v1/today")
+				.header("Authorization", bearer(parent)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.childSubmissionStatus").value("SUBMITTED"))
+			.andExpect(jsonPath("$.revealStatus").value("WAITING_FOR_PARENT"))
+			.andExpect(jsonPath("$.myAnswer").value((Object) null))
+			.andExpect(jsonPath("$.partnerAnswer").doesNotExist());
 	}
 
 	@Test
