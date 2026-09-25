@@ -7,6 +7,7 @@ import '../../../core/widgets/error_retry_view.dart';
 import '../../child_answer/presentation/child_answer_args.dart';
 import '../../child_answer/presentation/widgets/question_card.dart';
 import '../../onboarding/domain/app_user.dart';
+import '../../recording/presentation/recording_args.dart';
 import '../domain/today.dart';
 import 'today_provider.dart';
 
@@ -192,9 +193,21 @@ class _ParentSection extends ConsumerWidget {
   const _ParentSection({required this.today});
   final Today today;
 
-  // TODO(B): 녹음 화면 인자가 정해지면 assignmentId·질문을 extra로 넘긴다
-  void _openRecording(BuildContext context, WidgetRef ref) =>
-      _openAndRefresh(context, ref, '/recording');
+  void _openRecording(BuildContext context, WidgetRef ref) {
+    final my = today.myAnswer;
+    _openAndRefresh(
+      context,
+      ref,
+      '/recording',
+      extra: RecordingArgs(
+        assignmentId: today.assignmentId,
+        questionText: today.question.text,
+        questionAudioUrl: today.question.audioUrl,
+        recordingId: my is VoiceAnswer ? my.recordingId : null, // 처리 상태 재조회
+        canRecord: !today.isRevealed,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -240,12 +253,28 @@ class _ParentSection extends ConsumerWidget {
       );
     }
 
-    // TODO(B): 자녀 답변 TTS 재생 연결
     final child = today.partnerAnswer;
-    return _AnswerCard(
-      label: '자녀의 답',
-      text: child is TextAnswer ? child.text : '자녀가 답했어요.',
-      highlighted: true,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AnswerCard(
+          label: '자녀의 답',
+          text: child is TextAnswer ? child.text : '자녀가 답했어요.',
+          highlighted: true,
+        ),
+        if (child is TextAnswer) ...[
+          const SizedBox(height: 20),
+          // 음성 상태 조회·재생·링크 갱신은 부모 답변 화면이 처리한다
+          OutlinedButton.icon(
+            onPressed: () => context.push('/parent-answer'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(56),
+            ),
+            icon: const Icon(Icons.volume_up),
+            label: const Text('목소리로 듣기'),
+          ),
+        ],
+      ],
     );
   }
 }

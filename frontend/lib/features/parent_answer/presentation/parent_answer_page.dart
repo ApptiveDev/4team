@@ -71,7 +71,9 @@ class _ParentAnswerPageState extends ConsumerState<ParentAnswerPage>
       appBar: AppBar(
         title: const Text('자녀의 이야기'),
         leading: IconButton(
-          onPressed: () => context.go('/today'),
+          // 홈에서 push로 들어왔으면 pop해서 홈이 새로고침되게 한다
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/today'),
           tooltip: '오늘 화면으로',
           icon: const Icon(Icons.arrow_back),
         ),
