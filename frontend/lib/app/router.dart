@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/widgets/placeholder_page.dart';
+import '../features/onboarding/presentation/onboarding_page.dart';
 import '../core/config/app_config.dart';
 import '../features/child_answer/presentation/child_answer_args.dart';
 import '../features/child_answer/presentation/child_answer_page.dart';
@@ -12,7 +13,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const PlaceholderPage(title: '역할 선택·가입'),
+        builder: (context, state) => const OnboardingPage(),
       ), // A
       GoRoute(
         path: '/pairing',

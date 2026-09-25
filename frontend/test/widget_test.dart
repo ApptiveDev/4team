@@ -9,7 +9,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: App()));
     await tester.pumpAndSettle(); // 화면 이동이 끝날 때까지 대기
 
-    // 첫 화면(/onboarding)의 제목이 보이는지 확인
-    expect(find.text('역할 선택·가입'), findsOneWidget);
+    // 첫 화면(/onboarding)의 역할 선택 질문이 보이는지 확인
+    expect(find.text('누가 사용하시나요?'), findsOneWidget);
   });
 }

@@ -23,7 +23,10 @@ class MockAuthDataSource implements AuthDataSource {
     await Future.delayed(const Duration(milliseconds: 500)); // 로딩 확인용
     final file = role == 'PARENT' ? 'user_parent' : 'user_child';
     final raw = await rootBundle.loadString('assets/mocks/$file.json');
-    return jsonDecode(raw) as Map<String, dynamic>;
+    final json = jsonDecode(raw) as Map<String, dynamic>;
+    // 서버처럼 입력한 이름을 돌려준다
+    (json['user'] as Map<String, dynamic>)['name'] = name;
+    return json;
   }
 }
 
