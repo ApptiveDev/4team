@@ -198,8 +198,10 @@ class _ChildSection extends ConsumerWidget {
               if (p is! VoiceAnswer || p.originalAudioUrl == null) {
                 throw StateError('음성을 다시 불러오지 못했어요');
               }
-              return PlaybackSource(p.originalAudioUrl!,
-                  expiresAt: p.originalAudioExpiresAt);
+              return PlaybackSource(
+                p.originalAudioUrl!,
+                expiresAt: p.originalAudioExpiresAt,
+              );
             },
           ),
         ],
