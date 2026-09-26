@@ -30,6 +30,8 @@ import com.apptive.backend.domain.pair.entity.FamilyPair;
 import com.apptive.backend.domain.pair.repository.FamilyPairRepository;
 import com.apptive.backend.domain.question.entity.Question;
 import com.apptive.backend.domain.question.repository.QuestionRepository;
+import com.apptive.backend.domain.recording.entity.Recording;
+import com.apptive.backend.domain.recording.repository.RecordingRepository;
 import com.apptive.backend.domain.user.entity.Role;
 import com.apptive.backend.domain.user.entity.User;
 import com.apptive.backend.domain.user.repository.UserRepository;
@@ -53,6 +55,9 @@ class ChildAnswerControllerTest {
 	private ChildAnswerRepository childAnswerRepository;
 
 	@Autowired
+	private RecordingRepository recordingRepository;
+
+	@Autowired
 	private AssignmentRepository assignmentRepository;
 
 	@Autowired
@@ -73,6 +78,7 @@ class ChildAnswerControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		recordingRepository.deleteAll();
 		childAnswerRepository.deleteAll();
 		assignmentRepository.deleteAll();
 		familyPairRepository.deleteAll();
@@ -101,6 +107,28 @@ class ChildAnswerControllerTest {
 			today,
 			now
 		));
+	}
+
+	@Test
+	void revealedChildAnswerCannotBeUpdated() throws Exception {
+		putAnswer(child, assignment.getId(), "최초 답변")
+			.andExpect(status().isOk());
+		OffsetDateTime now = OffsetDateTime.now(clock);
+		recordingRepository.save(new Recording(
+			"rec_answer_locked",
+			assignment,
+			"recordings/rec_answer_locked/audio.m4a",
+			"audio.m4a",
+			"audio/mp4",
+			12,
+			"locked-upload",
+			"locked-version",
+			now
+		));
+
+		putAnswer(child, assignment.getId(), "공개 후 수정")
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.errorCode").value("ANSWER_LOCKED"));
 	}
 
 	@Test

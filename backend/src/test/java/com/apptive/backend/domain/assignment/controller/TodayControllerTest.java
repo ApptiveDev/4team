@@ -29,6 +29,8 @@ import com.apptive.backend.domain.pair.repository.FamilyPairRepository;
 import com.apptive.backend.domain.pair.repository.PairInvitationRepository;
 import com.apptive.backend.domain.question.entity.Question;
 import com.apptive.backend.domain.question.repository.QuestionRepository;
+import com.apptive.backend.domain.recording.entity.Recording;
+import com.apptive.backend.domain.recording.repository.RecordingRepository;
 import com.apptive.backend.domain.user.entity.Role;
 import com.apptive.backend.domain.user.entity.User;
 import com.apptive.backend.domain.user.repository.UserRepository;
@@ -47,6 +49,9 @@ class TodayControllerTest {
 
 	@Autowired
 	private ChildAnswerRepository childAnswerRepository;
+
+	@Autowired
+	private RecordingRepository recordingRepository;
 
 	@Autowired
 	private AssignmentRepository assignmentRepository;
@@ -71,6 +76,7 @@ class TodayControllerTest {
 
 	@BeforeEach
 	void setUp() {
+		recordingRepository.deleteAll();
 		childAnswerRepository.deleteAll();
 		assignmentRepository.deleteAll();
 		invitationRepository.deleteAll();
@@ -94,6 +100,60 @@ class TodayControllerTest {
 			));
 		question.updateFromSeed(today, "오늘의 테스트 질문은 무엇인가요?", "TEST", null, true);
 		questionRepository.save(question);
+	}
+
+	@Test
+	void bothAnswersAreRevealedToParentAndChild() throws Exception {
+		mockMvc.perform(get("/api/v1/today")
+				.header("Authorization", bearer(child)))
+			.andExpect(status().isOk());
+		Assignment assignment = assignmentRepository.findAll().get(0);
+		OffsetDateTime now = OffsetDateTime.now(clock);
+		Recording recording = new Recording(
+			"rec_today_parent",
+			assignment,
+			"recordings/rec_today_parent/audio.m4a",
+			"audio.m4a",
+			"audio/mp4",
+			12,
+			"today-upload",
+			"version-today",
+			now
+		);
+		recording.markSttProcessing(now);
+		recording.markSttDone("부모님의 원문입니다.", now);
+		recording.markLlmProcessing(now);
+		recording.markReady("부모님의 이야기입니다.", now);
+		recordingRepository.save(recording);
+		childAnswerRepository.save(new ChildAnswer(
+			"ans_today_revealed",
+			assignment,
+			"자녀의 답변입니다.",
+			TtsStatus.PROCESSING,
+			now,
+			now
+		));
+
+		mockMvc.perform(get("/api/v1/today")
+				.header("Authorization", bearer(child)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.parentSubmissionStatus").value("SUBMITTED"))
+			.andExpect(jsonPath("$.childSubmissionStatus").value("SUBMITTED"))
+			.andExpect(jsonPath("$.revealStatus").value("REVEALED"))
+			.andExpect(jsonPath("$.canViewPartnerAnswer").value(true))
+			.andExpect(jsonPath("$.myAnswer.type").value("TEXT"))
+			.andExpect(jsonPath("$.partnerAnswer.type").value("VOICE"))
+			.andExpect(jsonPath("$.partnerAnswer.recordingId").value("rec_today_parent"))
+			.andExpect(jsonPath("$.partnerAnswer.processingStatus").value("READY"))
+			.andExpect(jsonPath("$.partnerAnswer.sttText").value("부모님의 원문입니다."))
+			.andExpect(jsonPath("$.partnerAnswer.summaryText").value("부모님의 이야기입니다."));
+
+		mockMvc.perform(get("/api/v1/today")
+				.header("Authorization", bearer(parent)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.myAnswer.type").value("VOICE"))
+			.andExpect(jsonPath("$.partnerAnswer.type").value("TEXT"))
+			.andExpect(jsonPath("$.partnerAnswer.text").value("자녀의 답변입니다."));
 	}
 
 	@Test

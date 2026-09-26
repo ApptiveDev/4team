@@ -1,0 +1,56 @@
+{
+  "items": [
+    {
+      "storyId": "story_demo_04",
+      "assignmentId": "asg_demo_04",
+      "assignedDate": "2026-09-21",
+      "question": {
+        "id": "qst_007",
+        "text": "학창 시절 가장 친했던 친구는 누구였나요?",
+        "category": "SCHOOL"
+      },
+      "parentAnswer": {
+        "recordingId": "rec_demo_04",
+        "processingStatus": "FAILED",
+        "originalAudioUrl": "https://signed.example.com/rec_demo_04.m4a?expires=...",
+        "originalAudioExpiresAt": "2026-09-21T23:50:00+09:00",
+        "sttText": null,
+        "summaryText": null,
+        "processingNotice": "음성 정리는 실패했지만 원본 녹음은 안전하게 저장되었습니다."
+      },
+      "childAnswer": {
+        "answerId": "ans_demo_04",
+        "text": "저는 중학교 때 짝꿍이랑 아직도 연락해요.",
+        "ttsStatus": "READY"
+      },
+      "revealedAt": "2026-09-21T22:05:00+09:00"
+    },
+    {
+      "storyId": "story_demo_05",
+      "assignmentId": "asg_demo_05",
+      "assignedDate": "2026-09-20",
+      "question": {
+        "id": "qst_021",
+        "text": "요즘 가장 자주 드시는 음식은 무엇인가요?",
+        "category": "FOOD"
+      },
+      "parentAnswer": {
+        "recordingId": "rec_demo_05",
+        "processingStatus": "READY",
+        "originalAudioUrl": "https://signed.example.com/rec_demo_05.m4a?expires=...",
+        "originalAudioExpiresAt": "2026-09-20T23:50:00+09:00",
+        "sttText": "요즘은 그냥 된장찌개가 제일 맛있어.",
+        "summaryText": "요즘은 된장찌개를 가장 자주 드신대요.",
+        "processingNotice": null
+      },
+      "childAnswer": {
+        "answerId": "ans_demo_05",
+        "text": "다음에 집에 가면 같이 끓여 먹어요!",
+        "ttsStatus": "READY"
+      },
+      "revealedAt": "2026-09-20T18:20:00+09:00"
+    }
+  ],
+  "nextCursor": null,
+  "hasNext": false
+}

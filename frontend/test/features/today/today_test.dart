@@ -23,6 +23,21 @@ void main() {
     final my = today.myAnswer as VoiceAnswer;
     expect(my.processingStatus, 'LLM_PROCESSING');
     expect(my.displayText, '어릴 때는 동네에서 고무줄 놀이를...'); // 정리본이 없으면 원문
+    expect(
+      my.originalAudioExpiresAt,
+      DateTime.parse('2026-09-24T10:20:00+09:00'),
+    );
+  });
+
+  test('음성 링크 만료 시각이 없으면 null로 둔다', () {
+    final json = todayFixture('waiting_for_child');
+    (json['myAnswer'] as Map<String, dynamic>)
+      ..remove('originalAudioExpiresAt')
+      ..['originalAudioUrl'] = null;
+    final my = Today.fromJson(json).myAnswer as VoiceAnswer;
+
+    expect(my.originalAudioUrl, isNull);
+    expect(my.originalAudioExpiresAt, isNull);
   });
 
   test('공개 상태: 상대 답을 읽고 정리본을 우선 보여준다', () {

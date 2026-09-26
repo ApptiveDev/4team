@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../onboarding/data/auth_providers.dart';
 import '../../onboarding/domain/app_user.dart';
+import '../../onboarding/presentation/session.dart';
 import '../data/pairing_providers.dart';
 import '../domain/pairing_repository.dart';
 import 'pairing_controller.dart';
@@ -22,6 +23,8 @@ class PairingPage extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: user.when(
+          // 가입 직후 다시 읽는 동안 이전 값(null)을 쓰면 가입 화면으로 잘못 돌아간다
+          skipLoadingOnRefresh: false,
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (_, _) => ErrorRetryView(
             message: '정보를 불러오지 못했어요.',
@@ -78,8 +81,11 @@ class _ChildInviteViewState extends ConsumerState<_ChildInviteView> {
         _poll?.cancel();
         context.go('/today');
       }
-    } catch (_) {
-      // 잠깐의 네트워크 오류는 다음 확인 때 다시 시도한다.
+    } catch (e) {
+      // 로그인 만료면 가입 화면으로, 잠깐의 네트워크 오류는 다음 확인 때 다시 시도한다.
+      if (mounted && await handleSessionExpired(context, ref, e)) {
+        _poll?.cancel();
+      }
     } finally {
       _checking = false;
     }
@@ -88,7 +94,13 @@ class _ChildInviteViewState extends ConsumerState<_ChildInviteView> {
   @override
   Widget build(BuildContext context) {
     ref.listen(invitationProvider, (_, next) {
-      if (next.hasError && isAlreadyPaired(next.error!)) context.go('/today');
+      final e = next.error;
+      if (e == null) return;
+      if (isAlreadyPaired(e)) {
+        context.go('/today');
+      } else {
+        handleSessionExpired(context, ref, e);
+      }
     });
 
     final invitation = ref.watch(invitationProvider);
@@ -235,9 +247,11 @@ class _ParentJoinViewState extends ConsumerState<_ParentJoinView> {
   @override
   Widget build(BuildContext context) {
     ref.listen(joinControllerProvider, (_, next) {
-      if (next.value == true ||
-          (next.hasError && isAlreadyPaired(next.error!))) {
+      final e = next.error;
+      if (next.value == true || (e != null && isAlreadyPaired(e))) {
         context.go('/today');
+      } else if (e != null) {
+        handleSessionExpired(context, ref, e);
       }
     });
 

@@ -1,0 +1,81 @@
+{
+  "items": [
+    {
+      "storyId": "story_demo_01",
+      "assignmentId": "asg_demo_01",
+      "assignedDate": "2026-09-24",
+      "question": {
+        "id": "qst_045",
+        "text": "어릴 때 가장 좋아했던 놀이는 무엇이었나요?",
+        "category": "CHILDHOOD"
+      },
+      "parentAnswer": {
+        "recordingId": "rec_demo_01",
+        "processingStatus": "READY",
+        "originalAudioUrl": "https://signed.example.com/rec_demo_01.m4a?expires=...",
+        "originalAudioExpiresAt": "2026-09-24T23:50:00+09:00",
+        "sttText": "어릴 때는 동네에서 고무줄 놀이를 했지.",
+        "summaryText": "어린 시절 동네 친구들과 고무줄 놀이를 즐겼어요.",
+        "processingNotice": null
+      },
+      "childAnswer": {
+        "answerId": "ans_demo_01",
+        "text": "저는 놀이터에서 숨바꼭질하던 시간이 기억나요.",
+        "ttsStatus": "READY"
+      },
+      "revealedAt": "2026-09-24T21:10:00+09:00"
+    },
+    {
+      "storyId": "story_demo_02",
+      "assignmentId": "asg_demo_02",
+      "assignedDate": "2026-09-23",
+      "question": {
+        "id": "qst_012",
+        "text": "처음으로 월급을 받았을 때 무엇을 하셨나요?",
+        "category": "LIFE"
+      },
+      "parentAnswer": {
+        "recordingId": "rec_demo_02",
+        "processingStatus": "READY",
+        "originalAudioUrl": "https://signed.example.com/rec_demo_02.m4a?expires=...",
+        "originalAudioExpiresAt": "2026-09-23T23:50:00+09:00",
+        "sttText": "첫 월급 받고 제일 먼저 우리 어머니 아버지 내복을 샀어.",
+        "summaryText": "첫 월급으로 부모님께 내복을 사 드렸어요.",
+        "processingNotice": null
+      },
+      "childAnswer": {
+        "answerId": "ans_demo_02",
+        "text": "저는 첫 알바비로 가족 치킨을 샀어요!",
+        "ttsStatus": "READY"
+      },
+      "revealedAt": "2026-09-23T20:45:00+09:00"
+    },
+    {
+      "storyId": "story_demo_03",
+      "assignmentId": "asg_demo_03",
+      "assignedDate": "2026-09-22",
+      "question": {
+        "id": "qst_030",
+        "text": "살면서 가장 기억에 남는 여행지는 어디인가요?",
+        "category": "TRAVEL"
+      },
+      "parentAnswer": {
+        "recordingId": "rec_demo_03",
+        "processingStatus": "READY",
+        "originalAudioUrl": "https://signed.example.com/rec_demo_03.m4a?expires=...",
+        "originalAudioExpiresAt": "2026-09-22T23:50:00+09:00",
+        "sttText": "신혼여행 때 제주도 바다가 그렇게 파랬어.",
+        "summaryText": "신혼여행으로 간 제주도의 바다가 가장 기억에 남아요.",
+        "processingNotice": null
+      },
+      "childAnswer": {
+        "answerId": "ans_demo_03",
+        "text": "저는 초등학생 때 가족이랑 간 경주가 기억나요.",
+        "ttsStatus": "READY"
+      },
+      "revealedAt": "2026-09-22T19:30:00+09:00"
+    }
+  ],
+  "nextCursor": "ZGVtb19wYWdlXzI",
+  "hasNext": true
+}
