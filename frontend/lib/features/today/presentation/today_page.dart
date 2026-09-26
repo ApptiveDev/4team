@@ -11,6 +11,7 @@ import '../../onboarding/domain/app_user.dart';
 import '../../recording/presentation/recording_args.dart';
 import '../domain/today.dart';
 import 'today_provider.dart';
+import '../../../core/widgets/audio_playback_card.dart';
 
 /// 오늘 질문 홈. 서버가 계산한 제출·공개 상태에 따라 다음 행동 하나를 보여준다.
 class TodayPage extends ConsumerWidget {
@@ -183,7 +184,27 @@ class _ChildSection extends ConsumerWidget {
               : '부모님이 목소리로 답하셨어요.',
           highlighted: true,
         ),
-        // TODO(C): 원본 음성 재생·자막이 있는 공개 답변 화면이 생기면 여기서 연결
+        if (parent is VoiceAnswer && parent.originalAudioUrl != null) ...[
+          const SizedBox(height: 12),
+          AudioPlaybackCard(
+            source: PlaybackSource(
+              parent.originalAudioUrl!,
+              expiresAt: parent.originalAudioExpiresAt,
+            ),
+            label: '부모님 목소리 듣기',
+            onRefresh: () async {
+              final fresh = await ref.refresh(todayProvider.future);
+              final p = fresh.partnerAnswer;
+              if (p is! VoiceAnswer || p.originalAudioUrl == null) {
+                throw StateError('음성을 다시 불러오지 못했어요');
+              }
+              return PlaybackSource(
+                p.originalAudioUrl!,
+                expiresAt: p.originalAudioExpiresAt,
+              );
+            },
+          ),
+        ],
         if (myText != null) ...[
           const SizedBox(height: 16),
           _AnswerCard(label: '내 답', text: myText),

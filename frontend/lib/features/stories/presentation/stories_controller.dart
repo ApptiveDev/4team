@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_exception.dart';
 import '../data/stories_providers.dart';
 import '../domain/story.dart';
+import '../../../core/network/retry_policy.dart';
 
 /// 지금까지 불러온 이야기 목록과 다음 페이지 상태
 class StoriesState {
@@ -80,7 +81,6 @@ class StoriesController extends AsyncNotifier<StoriesState> {
 final storiesControllerProvider =
     AsyncNotifierProvider.autoDispose<StoriesController, StoriesState>(
       StoriesController.new,
-      // Riverpod 3는 실패한 provider를 자동으로 여러 번 재시도한다.
-      // TODO(C): today-home PR 병합 후 retryTransientOnly로 교체
-      retry: (retryCount, error) => null,
+      // Riverpod 3 기본 재시도 대신, 일시적인 오류만 다시 시도한다.
+      retry: retryTransientOnly,
     );
