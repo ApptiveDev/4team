@@ -45,11 +45,33 @@ Spring Boot는 `.env`를 자동으로 읽지 않는다. IntelliJ로 실행한다
 | `R2_ACCOUNT_ID` | Cloudflare 계정 ID |
 | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | R2 S3 호환 자격증명 |
 | `R2_BUCKET_NAME` | 비공개 원본 음성 bucket |
+| `STORAGE_TYPE` | `local`(기본) 또는 `r2` |
+| `AUDIO_PROCESSING_MODE` | `mock`(기본) 또는 `openai` |
+| `OPENAI_TRANSCRIPTION_MODEL`, `OPENAI_SUMMARY_MODEL` | STT·이야기 정리 모델 |
 | `JPA_SHOW_SQL` | 로컬 SQL 출력 여부, 기본 `false` |
 | `JPA_DDL_AUTO` | 로컬 기본 `update`; 운영 배포 전 migration 도구로 교체 |
 
 실제 `.env`, API key, 비밀번호는 커밋하지 않는다. 전체 형식은
 [`.env.example`](.env.example)을 복사해 사용한다.
+
+### 실제 음성 처리 활성화
+
+기본 설정은 로컬 파일 저장과 Mock STT·LLM을 사용한다. R2와 OpenAI를 실제로
+사용하려면 `.env`에서 다음 값을 설정한다.
+
+```dotenv
+STORAGE_TYPE=r2
+AUDIO_PROCESSING_MODE=openai
+OPENAI_API_KEY=...
+R2_ACCOUNT_ID=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET_NAME=...
+```
+
+R2 bucket은 비공개로 유지한다. 앱에는 원본 object key 대신 15분 동안 유효한
+GET Signed URL만 반환한다. 실제 모드에서도 업로드 API와 폴링 상태 계약은 Mock과
+동일하다.
 
 ## 테스트
 

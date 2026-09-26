@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +17,7 @@ import com.apptive.backend.common.exception.ApiException;
 import com.apptive.backend.common.exception.ErrorCode;
 
 @Component
+@ConditionalOnProperty(name = "app.storage.type", havingValue = "local", matchIfMissing = true)
 public class LocalRecordingStorage implements RecordingStorage {
 
 	private final Path rootDirectory;
@@ -23,6 +26,20 @@ public class LocalRecordingStorage implements RecordingStorage {
 		@Value("${app.storage.local-directory:${java.io.tmpdir}/4team-recordings}") String rootDirectory
 	) {
 		this.rootDirectory = Path.of(rootDirectory).toAbsolutePath().normalize();
+	}
+
+	@Override
+	public byte[] read(String objectKey) {
+		try {
+			return Files.readAllBytes(resolveSafely(objectKey));
+		} catch (IOException exception) {
+			throw new ApiException(ErrorCode.STORAGE_ERROR);
+		}
+	}
+
+	@Override
+	public Optional<SignedAudioUrl> createSignedReadUrl(String objectKey) {
+		return Optional.empty();
 	}
 
 	@Override

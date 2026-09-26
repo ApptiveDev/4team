@@ -47,6 +47,19 @@ public class RecordingStatusService {
 		return true;
 	}
 
+	@Transactional(readOnly = true)
+	public RecordingProcessingSource findProcessingSource(String recordingId, String version) {
+		Recording recording = find(recordingId);
+		if (!isCurrent(recording, version)) {
+			return null;
+		}
+		return new RecordingProcessingSource(
+			recording.getObjectKey(),
+			recording.getOriginalFilename(),
+			recording.getContentType()
+		);
+	}
+
 	@Transactional
 	public boolean markSttDone(String recordingId, String version, String sttText) {
 		Recording recording = find(recordingId);
