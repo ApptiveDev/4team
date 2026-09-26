@@ -13,6 +13,7 @@ class PlaybackSource {
 /// 사용: AudioPlaybackCard(source: PlaybackSource(url, expiresAt: expiresAt),
 ///   label: '부모님 목소리 듣기', onRefresh: reloadAudioSource)
 /// reloadAudioSource는 today/stories를 재조회해 새 PlaybackSource를 반환한다.
+/// 재조회 중 화면의 source를 교체하지 않는다. source 교체는 현재 재생을 중단한다.
 class AudioPlaybackCard extends StatefulWidget {
   const AudioPlaybackCard({
     super.key,
@@ -20,6 +21,7 @@ class AudioPlaybackCard extends StatefulWidget {
     this.label = '음성 듣기',
     this.onRefresh,
     this.enabled = true,
+    this.playerFactory,
   });
   final PlaybackSource source;
   final String label;
@@ -28,13 +30,17 @@ class AudioPlaybackCard extends StatefulWidget {
   final Future<PlaybackSource> Function()? onRefresh;
   final bool enabled;
 
+  /// 테스트에서 네이티브 오디오 없이 검증한다. 생성한 플레이어는 카드가 dispose한다.
+  @visibleForTesting
+  final AudioPlayer Function()? playerFactory;
+
   @override
   State<AudioPlaybackCard> createState() => AudioPlaybackCardState();
 }
 
 class AudioPlaybackCardState extends State<AudioPlaybackCard>
     with WidgetsBindingObserver {
-  final AudioPlayer _player = AudioPlayer();
+  late final AudioPlayer _player;
   late PlaybackSource _source;
   StreamSubscription<PlayerState>? _stateSubscription;
   StreamSubscription<PlayerException>? _errorSubscription;
@@ -46,6 +52,7 @@ class AudioPlaybackCardState extends State<AudioPlaybackCard>
   @override
   void initState() {
     super.initState();
+    _player = widget.playerFactory?.call() ?? AudioPlayer();
     _source = widget.source;
     WidgetsBinding.instance.addObserver(this);
     _stateSubscription = _player.playerStateStream.listen((_) {
@@ -112,7 +119,11 @@ class AudioPlaybackCardState extends State<AudioPlaybackCard>
           false;
       if (expired || _error != null) {
         if (widget.onRefresh != null) {
-          _source = await widget.onRefresh!();
+          final refreshed = await widget.onRefresh!().timeout(
+            const Duration(seconds: 20),
+          );
+          if (!mounted || generation != _generation || !widget.enabled) return;
+          _source = refreshed;
           _loaded = false;
         } else if (expired) {
           throw StateError('재조회 필요');
@@ -138,7 +149,11 @@ class AudioPlaybackCardState extends State<AudioPlaybackCard>
         _error = null;
       });
       // play()는 재생이 끝나야 완료되므로 버튼 동작에서 기다리지 않는다.
-      unawaited(_player.play().catchError((Object _) => _showError()));
+      unawaited(
+        _player.play().catchError((Object _) {
+          if (generation == _generation) _showError();
+        }),
+      );
     } catch (_) {
       if (generation == _generation) _showError();
     }
