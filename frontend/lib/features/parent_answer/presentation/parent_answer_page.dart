@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/audio_playback_card.dart';
+import '../../../core/network/api_exception.dart';
+import '../../onboarding/presentation/session.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../data/parent_answer_providers.dart';
 import '../domain/parent_answer.dart';
@@ -41,14 +43,15 @@ class _ParentAnswerPageState extends ConsumerState<ParentAnswerPage>
     final status = _controller.errorStatus;
     if (status != 401 && status != 403) return;
     _redirecting = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(status == 401 ? '다시 시작해 주세요.' : '이 화면은 볼 수 없어요.'),
-        ),
-      );
-      context.go(status == 401 ? '/onboarding' : '/today');
+      if (status == 401) {
+        await handleSessionExpired(context, ref, ApiException(statusCode: 401));
+        return;
+      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('이 화면은 볼 수 없어요.')));
+      context.go('/today');
     });
   }
 
