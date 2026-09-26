@@ -69,6 +69,7 @@ class VoiceAnswer extends TodayAnswer {
     required this.recordingId,
     required this.processingStatus,
     this.originalAudioUrl,
+    this.originalAudioExpiresAt,
     this.sttText,
     this.summaryText,
     this.processingNotice,
@@ -77,6 +78,9 @@ class VoiceAnswer extends TodayAnswer {
   final String recordingId;
   final String processingStatus;
   final String? originalAudioUrl;
+
+  /// 서명 URL 만료 시각. 재생 위젯(AudioPlaybackCard)이 만료 전에 새로 받아올 때 쓴다.
+  final DateTime? originalAudioExpiresAt;
   final String? sttText;
   final String? summaryText;
   final String? processingNotice;
@@ -88,6 +92,7 @@ class VoiceAnswer extends TodayAnswer {
     recordingId: json['recordingId'] as String,
     processingStatus: json['processingStatus'] as String,
     originalAudioUrl: json['originalAudioUrl'] as String?,
+    originalAudioExpiresAt: _parseDate(json['originalAudioExpiresAt']),
     sttText: json['sttText'] as String?,
     summaryText: json['summaryText'] as String?,
     processingNotice: json['processingNotice'] as String?,
@@ -171,3 +176,6 @@ class Today {
     );
   }
 }
+
+DateTime? _parseDate(Object? value) =>
+    value is String ? DateTime.parse(value) : null;
