@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../domain/app_user.dart';
+import 'session.dart';
 import 'sign_up_controller.dart';
 
 /// 역할 선택 → 이름 입력 → 가입. 한 화면에 주요 행동 하나만 둔다.
@@ -41,6 +42,18 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         context.go(user.isPaired ? '/today' : '/pairing');
       }
     });
+
+    // 이미 가입한 기기면 앱을 켤 때 바로 홈이나 페어링으로 보낸다
+    ref.listen(launchDestinationProvider, (_, next) {
+      // 다시 계산하는 중에는 이전 값이 실려 오므로 계산이 끝난 값에만 반응한다
+      if (next.isLoading) return;
+      final destination = next.value;
+      if (destination != null) context.go(destination);
+    });
+    final launch = ref.watch(launchDestinationProvider);
+    if (launch.isLoading || launch.value != null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     final role = _role;
     return Scaffold(
