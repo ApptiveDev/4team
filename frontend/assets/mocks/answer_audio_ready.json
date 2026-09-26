@@ -1,0 +1,7 @@
+{
+  "answerId": "ans_01J8M9DDP02MTHJY44YKN3ZE73",
+  "ttsStatus": "READY",
+  "audioUrl": "https://signed.example.com/tts/ans_123.mp3?expires=...",
+  "audioExpiresAt": "2026-09-24T10:45:00+09:00",
+  "processingNotice": null
+}

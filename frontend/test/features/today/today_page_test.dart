@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:life_record/core/network/api_exception.dart';
 import 'package:life_record/features/child_answer/presentation/child_answer_args.dart';
+import 'package:life_record/features/recording/presentation/recording_args.dart';
 import 'package:life_record/features/today/data/today_providers.dart';
 import 'package:life_record/features/today/presentation/today_page.dart';
 
@@ -11,6 +12,7 @@ import 'today_fixtures.dart';
 
 class _Harness {
   ChildAnswerArgs? childAnswerArgs;
+  RecordingArgs? recordingArgs;
 }
 
 Future<_Harness> _pump(WidgetTester tester, FakeTodayDataSource source) async {
@@ -36,7 +38,14 @@ Future<_Harness> _pump(WidgetTester tester, FakeTodayDataSource source) async {
           return back('자녀 답변 화면');
         },
       ),
-      GoRoute(path: '/recording', builder: (_, _) => back('녹음 화면')),
+      GoRoute(
+        path: '/recording',
+        builder: (_, state) {
+          harness.recordingArgs = state.extra as RecordingArgs?;
+          return back('녹음 화면');
+        },
+      ),
+      GoRoute(path: '/parent-answer', builder: (_, _) => back('부모 답변 화면')),
       GoRoute(path: '/stories', builder: (_, _) => back('지난 이야기 화면')),
       GoRoute(path: '/pairing', builder: (_, _) => const Text('페어링 화면')),
     ],
@@ -104,28 +113,49 @@ void main() {
       final json = todayFixture('waiting_for_both')..['viewerRole'] = 'PARENT';
       await _pump(tester, FakeTodayDataSource(json: json));
 
+      final harness = await _pump(tester, FakeTodayDataSource(json: json));
+
       await tester.tap(find.text('목소리로 답하기'));
       await tester.pumpAndSettle();
 
       expect(find.text('녹음 화면'), findsOneWidget);
+      final args = harness.recordingArgs!;
+      expect(args.assignmentId, 'asg_01J8M90G3M9BT7PRD6X4CN9C0E');
+      expect(args.questionText, '어릴 때 가장 좋아했던 놀이는 무엇이었나요?');
+      expect(args.questionAudioUrl, isNull);
+      expect(args.recordingId, isNull);
+      expect(args.canRecord, isTrue);
     });
 
     testWidgets('보낸 뒤에는 정리 중임을 알리고 다시 녹음할 수 있다', (tester) async {
-      await _pump(
+      final harness = await _pump(
         tester,
         FakeTodayDataSource(json: todayFixture('waiting_for_child')),
       );
 
       expect(find.textContaining('목소리를 보냈어요.'), findsOneWidget);
       expect(find.text('말씀하신 내용을 글로 정리하고 있어요.'), findsOneWidget);
-      expect(find.text('다시 녹음하기'), findsOneWidget);
+
+      await tester.tap(find.text('다시 녹음하기'));
+      await tester.pumpAndSettle();
+
+      // 기존 녹음의 처리 상태를 녹음 화면이 다시 조회한다
+      expect(
+        harness.recordingArgs!.recordingId,
+        'rec_01J8M96KKXMV5XMXY6KGJ05Q6D',
+      );
     });
 
-    testWidgets('공개되면 자녀의 답을 보여준다', (tester) async {
+    testWidgets('공개되면 자녀의 답을 보여주고 목소리로 들으러 갈 수 있다', (tester) async {
       await _pump(tester, FakeTodayDataSource(json: parentRevealedFixture()));
 
       expect(find.text('자녀의 답'), findsOneWidget);
       expect(find.text('저는 놀이터에서 숨바꼭질하던 시간이 기억나요.'), findsOneWidget);
+
+      await tester.tap(find.text('목소리로 듣기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('부모 답변 화면'), findsOneWidget);
     });
   });
 
