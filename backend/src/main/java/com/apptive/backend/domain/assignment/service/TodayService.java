@@ -18,6 +18,7 @@ import com.apptive.backend.domain.assignment.dto.TodayAssignmentResponse;
 import com.apptive.backend.domain.assignment.dto.TodayQuestionResponse;
 import com.apptive.backend.domain.assignment.dto.TodayResponse;
 import com.apptive.backend.domain.assignment.dto.TextTodayAnswerResponse;
+import com.apptive.backend.domain.assignment.dto.VoiceTodayAnswerResponse;
 import com.apptive.backend.domain.assignment.entity.Assignment;
 import com.apptive.backend.domain.assignment.entity.RevealStatus;
 import com.apptive.backend.domain.assignment.entity.SubmissionStatus;
@@ -26,6 +27,8 @@ import com.apptive.backend.domain.pair.entity.FamilyPair;
 import com.apptive.backend.domain.pair.repository.FamilyPairRepository;
 import com.apptive.backend.domain.question.entity.Question;
 import com.apptive.backend.domain.question.repository.QuestionRepository;
+import com.apptive.backend.domain.recording.entity.Recording;
+import com.apptive.backend.domain.recording.repository.RecordingRepository;
 import com.apptive.backend.domain.user.entity.Role;
 
 @Service
@@ -35,6 +38,7 @@ public class TodayService {
 	private final AssignmentRepository assignmentRepository;
 	private final QuestionRepository questionRepository;
 	private final ChildAnswerRepository childAnswerRepository;
+	private final RecordingRepository recordingRepository;
 	private final RevealPolicy revealPolicy;
 	private final IdGenerator idGenerator;
 	private final Clock clock;
@@ -44,6 +48,7 @@ public class TodayService {
 		AssignmentRepository assignmentRepository,
 		QuestionRepository questionRepository,
 		ChildAnswerRepository childAnswerRepository,
+		RecordingRepository recordingRepository,
 		RevealPolicy revealPolicy,
 		IdGenerator idGenerator,
 		Clock clock
@@ -52,6 +57,7 @@ public class TodayService {
 		this.assignmentRepository = assignmentRepository;
 		this.questionRepository = questionRepository;
 		this.childAnswerRepository = childAnswerRepository;
+		this.recordingRepository = recordingRepository;
 		this.revealPolicy = revealPolicy;
 		this.idGenerator = idGenerator;
 		this.clock = clock;
@@ -84,21 +90,24 @@ public class TodayService {
 	private TodayResponse toResponse(Assignment assignment, AuthenticatedUser authenticatedUser) {
 		Question question = assignment.getQuestion();
 		ChildAnswer childAnswer = childAnswerRepository.findByAssignment_Id(assignment.getId()).orElse(null);
-		SubmissionStatus parentStatus = SubmissionStatus.NOT_SUBMITTED;
+		Recording recording = recordingRepository.findByAssignment_Id(assignment.getId()).orElse(null);
+		SubmissionStatus parentStatus = recording == null
+			? SubmissionStatus.NOT_SUBMITTED
+			: SubmissionStatus.SUBMITTED;
 		SubmissionStatus childStatus = childAnswer == null
 			? SubmissionStatus.NOT_SUBMITTED
 			: SubmissionStatus.SUBMITTED;
 		RevealStatus revealStatus = revealPolicy.resolve(parentStatus, childStatus);
 		boolean revealed = revealStatus == RevealStatus.REVEALED;
-		TodayAnswerResponse myAnswer = authenticatedUser.role() == Role.CHILD
-			&& childAnswer != null
-			? TextTodayAnswerResponse.from(childAnswer)
-			: null;
-		TodayAnswerResponse partnerAnswer = authenticatedUser.role() == Role.PARENT
-			&& revealed
-			&& childAnswer != null
-			? TextTodayAnswerResponse.from(childAnswer)
-			: null;
+		TodayAnswerResponse myAnswer = authenticatedUser.role() == Role.PARENT
+			? voiceAnswer(recording)
+			: textAnswer(childAnswer);
+		TodayAnswerResponse partnerAnswer = null;
+		if (revealed) {
+			partnerAnswer = authenticatedUser.role() == Role.PARENT
+				? textAnswer(childAnswer)
+				: voiceAnswer(recording);
+		}
 
 		return new TodayResponse(
 			new TodayAssignmentResponse(
@@ -119,5 +128,13 @@ public class TodayService {
 			myAnswer,
 			partnerAnswer
 		);
+	}
+
+	private TodayAnswerResponse voiceAnswer(Recording recording) {
+		return recording == null ? null : VoiceTodayAnswerResponse.from(recording);
+	}
+
+	private TodayAnswerResponse textAnswer(ChildAnswer childAnswer) {
+		return childAnswer == null ? null : TextTodayAnswerResponse.from(childAnswer);
 	}
 }

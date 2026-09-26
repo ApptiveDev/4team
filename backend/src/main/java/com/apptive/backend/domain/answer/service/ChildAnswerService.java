@@ -17,6 +17,7 @@ import com.apptive.backend.domain.answer.repository.ChildAnswerRepository;
 import com.apptive.backend.domain.assignment.entity.Assignment;
 import com.apptive.backend.domain.assignment.entity.SubmissionStatus;
 import com.apptive.backend.domain.assignment.repository.AssignmentRepository;
+import com.apptive.backend.domain.recording.repository.RecordingRepository;
 import com.apptive.backend.domain.user.entity.Role;
 
 @Service
@@ -26,17 +27,20 @@ public class ChildAnswerService {
 
 	private final AssignmentRepository assignmentRepository;
 	private final ChildAnswerRepository childAnswerRepository;
+	private final RecordingRepository recordingRepository;
 	private final IdGenerator idGenerator;
 	private final Clock clock;
 
 	public ChildAnswerService(
 		AssignmentRepository assignmentRepository,
 		ChildAnswerRepository childAnswerRepository,
+		RecordingRepository recordingRepository,
 		IdGenerator idGenerator,
 		Clock clock
 	) {
 		this.assignmentRepository = assignmentRepository;
 		this.childAnswerRepository = childAnswerRepository;
+		this.recordingRepository = recordingRepository;
 		this.idGenerator = idGenerator;
 		this.clock = clock;
 	}
@@ -62,20 +66,26 @@ public class ChildAnswerService {
 			throw new ApiException(ErrorCode.VALIDATION_ERROR);
 		}
 
+		ChildAnswer existing = childAnswerRepository.findByAssignment_Id(assignmentId).orElse(null);
+		if (existing != null && recordingRepository.findByAssignment_Id(assignmentId).isPresent()) {
+			throw new ApiException(ErrorCode.ANSWER_LOCKED);
+		}
+
 		OffsetDateTime now = OffsetDateTime.now(clock);
-		ChildAnswer answer = childAnswerRepository.findByAssignment_Id(assignmentId)
-			.map(existing -> {
-				existing.update(text, now);
-				return existing;
-			})
-			.orElseGet(() -> new ChildAnswer(
+		ChildAnswer answer;
+		if (existing == null) {
+			answer = new ChildAnswer(
 				idGenerator.generate("ans"),
 				assignment,
 				text,
 				TtsStatus.PROCESSING,
 				now,
 				now
-			));
+			);
+		} else {
+			existing.update(text, now);
+			answer = existing;
+		}
 
 		return toResponse(childAnswerRepository.save(answer));
 	}
