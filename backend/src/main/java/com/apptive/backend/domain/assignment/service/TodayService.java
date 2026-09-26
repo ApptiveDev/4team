@@ -30,6 +30,7 @@ import com.apptive.backend.domain.question.repository.QuestionRepository;
 import com.apptive.backend.domain.recording.entity.Recording;
 import com.apptive.backend.domain.recording.repository.RecordingRepository;
 import com.apptive.backend.domain.user.entity.Role;
+import com.apptive.backend.infra.storage.RecordingStorage;
 
 @Service
 public class TodayService {
@@ -39,6 +40,7 @@ public class TodayService {
 	private final QuestionRepository questionRepository;
 	private final ChildAnswerRepository childAnswerRepository;
 	private final RecordingRepository recordingRepository;
+	private final RecordingStorage recordingStorage;
 	private final RevealPolicy revealPolicy;
 	private final IdGenerator idGenerator;
 	private final Clock clock;
@@ -49,6 +51,7 @@ public class TodayService {
 		QuestionRepository questionRepository,
 		ChildAnswerRepository childAnswerRepository,
 		RecordingRepository recordingRepository,
+		RecordingStorage recordingStorage,
 		RevealPolicy revealPolicy,
 		IdGenerator idGenerator,
 		Clock clock
@@ -58,6 +61,7 @@ public class TodayService {
 		this.questionRepository = questionRepository;
 		this.childAnswerRepository = childAnswerRepository;
 		this.recordingRepository = recordingRepository;
+		this.recordingStorage = recordingStorage;
 		this.revealPolicy = revealPolicy;
 		this.idGenerator = idGenerator;
 		this.clock = clock;
@@ -131,7 +135,13 @@ public class TodayService {
 	}
 
 	private TodayAnswerResponse voiceAnswer(Recording recording) {
-		return recording == null ? null : VoiceTodayAnswerResponse.from(recording);
+		if (recording == null) {
+			return null;
+		}
+		return VoiceTodayAnswerResponse.from(
+			recording,
+			recordingStorage.createSignedReadUrl(recording.getObjectKey()).orElse(null)
+		);
 	}
 
 	private TodayAnswerResponse textAnswer(ChildAnswer childAnswer) {
