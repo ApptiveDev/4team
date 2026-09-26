@@ -1,0 +1,56 @@
+import 'dart:async';
+
+import 'package:life_record/features/stories/domain/stories_repository.dart';
+import 'package:life_record/features/stories/domain/story.dart';
+
+/// 테스트용 이야기 하나를 만든다.
+Story testStory(
+  String id, {
+  String? summaryText = '정리된 부모님 답',
+  String processingStatus = 'READY',
+  String? processingNotice,
+}) {
+  return Story(
+    storyId: 'story_$id',
+    assignmentId: 'asg_$id',
+    assignedDate: DateTime(2026, 9, 24),
+    questionText: '질문 $id',
+    questionCategory: 'CHILDHOOD',
+    parentAnswer: StoryParentAnswer(
+      recordingId: 'rec_$id',
+      processingStatus: processingStatus,
+      summaryText: summaryText,
+      processingNotice: processingNotice,
+    ),
+    childAnswer: StoryChildAnswer(
+      answerId: 'ans_$id',
+      text: '자녀 답 $id',
+      ttsStatus: 'READY',
+    ),
+    revealedAt: DateTime(2026, 9, 24, 21),
+  );
+}
+
+class FakeStoriesRepository implements StoriesRepository {
+  FakeStoriesRepository(this.pages);
+
+  /// cursor → 돌려줄 페이지. 첫 페이지의 키는 null.
+  final Map<String?, StoryPage> pages;
+
+  /// 값이 있으면 fetchPage에서 이 에러를 던진다.
+  Object? error;
+
+  /// 값이 있으면 complete될 때까지 응답을 멈춘다. (불러오는 중 상태 테스트용)
+  Completer<void>? gate;
+
+  /// 요청된 cursor 기록 (중복 요청 확인용)
+  final List<String?> requestedCursors = [];
+
+  @override
+  Future<StoryPage> fetchPage({String? cursor}) async {
+    requestedCursors.add(cursor);
+    if (gate != null) await gate!.future;
+    if (error != null) throw error!;
+    return pages[cursor]!;
+  }
+}
