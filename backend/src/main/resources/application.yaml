@@ -33,6 +33,15 @@ app:
   storage:
     type: ${STORAGE_TYPE:local}
     local-directory: ${LOCAL_STORAGE_DIRECTORY:${java.io.tmpdir}/4team-recordings}
+  audio-processing:
+    mode: ${AUDIO_PROCESSING_MODE:mock}
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    transcription-model: ${OPENAI_TRANSCRIPTION_MODEL:gpt-4o-mini-transcribe}
+    summary-model: ${OPENAI_SUMMARY_MODEL:gpt-4o-mini}
+    connect-timeout: ${OPENAI_CONNECT_TIMEOUT:10s}
+    read-timeout: ${OPENAI_READ_TIMEOUT:90s}
   r2:
     account-id: ${R2_ACCOUNT_ID:}
     access-key-id: ${R2_ACCESS_KEY_ID:}
