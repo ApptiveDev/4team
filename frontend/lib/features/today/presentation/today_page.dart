@@ -6,6 +6,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../child_answer/presentation/child_answer_args.dart';
 import '../../child_answer/presentation/widgets/question_card.dart';
+import '../../onboarding/presentation/session.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../domain/today.dart';
 import 'today_provider.dart';
@@ -20,6 +21,8 @@ class TodayPage extends ConsumerWidget {
       final e = next.error;
       if (e is ApiException && e.errorCode == 'PAIR_NOT_FOUND') {
         context.go('/pairing');
+      } else if (e != null) {
+        handleSessionExpired(context, ref, e);
       }
     });
 
@@ -47,8 +50,9 @@ class _TodayError extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final e = error;
-    if (e is ApiException && e.errorCode == 'PAIR_NOT_FOUND') {
-      return const Center(child: CircularProgressIndicator()); // 페어링으로 이동 중
+    if (e is ApiException &&
+        (e.errorCode == 'PAIR_NOT_FOUND' || e.statusCode == 401)) {
+      return const Center(child: CircularProgressIndicator()); // 다른 화면으로 이동 중
     }
     final message = e is ApiException
         ? (e.errorCode == 'TODAY_ASSIGNMENT_NOT_FOUND'
