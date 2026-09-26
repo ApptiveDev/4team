@@ -38,6 +38,22 @@ class StoriesController extends AsyncNotifier<StoriesState> {
     return StoriesState.fromPage(page);
   }
 
+  /// 서명 URL이 만료됐을 때 새 URL을 받기 위해 해당 이야기를 다시 찾는다.
+  /// 목록 state는 바꾸지 않는다(재생 중인 카드가 다시 그려지지 않게).
+  Future<StoryParentAnswer> fetchLatestParentAnswer(String storyId) async {
+    final repo = ref.read(storiesRepositoryProvider);
+    String? cursor;
+    while (true) {
+      final page = await repo.fetchPage(cursor: cursor);
+      for (final story in page.items) {
+        if (story.storyId == storyId) return story.parentAnswer;
+      }
+      if (!page.hasNext) break;
+      cursor = page.nextCursor;
+    }
+    throw StateError('이야기를 다시 찾지 못했어요');
+  }
+
   Future<void> loadMore() async {
     final current = state.value;
     if (current == null || !current.hasNext || current.isLoadingMore) return;
