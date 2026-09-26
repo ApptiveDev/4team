@@ -100,6 +100,8 @@ void main() {
   testWidgets('마이크가 다른 앱에 중단되어도 자동 전송하지 않는다', (tester) async {
     await controller.start();
     recorder.interruptionController.add(null);
+    // 스트림 구독이 FakeAsync 밖(setUp)에서 만들어져 실제 이벤트 루프를 한 번 돌린다
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump();
     expect(controller.phase, RecordingPhase.draft);
     expect(repository.keys, isEmpty);
