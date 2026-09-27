@@ -222,7 +222,7 @@ void main() {
       Invitation(inviteCode: '482913', expiresAt: DateTime(2026, 9, 28, 21, 6)),
     );
 
-    expect(message, startsWith('초대 숫자: 482 913\n'));
+    expect(message, startsWith('[들려줘요] 초대 숫자: 482 913\n'));
     expect(message, contains('9월 28일 오후 9:06까지'));
   });
 }

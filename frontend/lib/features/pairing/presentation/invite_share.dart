@@ -10,8 +10,8 @@ String inviteShareMessage(Invitation invitation) {
   final spaced = code.length == 6
       ? '${code.substring(0, 3)} ${code.substring(3)}'
       : code;
-  return '초대 숫자: $spaced\n'
-      '앱을 열고 "부모님"을 고른 뒤 이 숫자 6자리를 입력하시면 저와 연결돼요.\n'
+  return '[들려줘요] 초대 숫자: $spaced\n'
+      '들려줘요 앱을 열고 "부모님"을 고른 뒤 이 숫자 6자리를 입력하시면 저와 연결돼요.\n'
       '(${formatExpiry(invitation.expiresAt)}까지 쓸 수 있어요)';
 }
 
