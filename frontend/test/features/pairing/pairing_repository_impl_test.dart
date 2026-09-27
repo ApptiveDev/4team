@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_record/core/network/api_exception.dart';
 import 'package:life_record/features/onboarding/data/user_storage.dart';
 import 'package:life_record/features/onboarding/domain/app_user.dart';
 import 'package:life_record/features/pairing/data/pairing_repository_impl.dart';
@@ -52,5 +53,43 @@ void main() {
 
     expect(await repo.isPaired(), isTrue);
     expect((await userStorage.read())?.isPaired, isTrue);
+  });
+
+  group('이미 연결됨(ALREADY_PAIRED)을 받으면', () {
+    ApiException alreadyPaired() =>
+        ApiException(statusCode: 409, errorCode: 'ALREADY_PAIRED');
+
+    test('부모가 실제로 연결돼 있으면 성공으로 본다', () async {
+      final repo = PairingRepositoryImpl(
+        FakePairingDataSource(joinError: alreadyPaired()),
+        userStorage,
+      );
+
+      await repo.join('482913');
+
+      expect((await userStorage.read())?.isPaired, isTrue);
+    });
+
+    test('자녀가 다른 분과 연결된 숫자면 오류를 그대로 알린다', () async {
+      final repo = PairingRepositoryImpl(
+        FakePairingDataSource(
+          joinError: alreadyPaired(),
+          pairedAfterChecks: 99,
+        ),
+        userStorage,
+      );
+
+      await expectLater(
+        repo.join('482913'),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.errorCode,
+            'errorCode',
+            'ALREADY_PAIRED',
+          ),
+        ),
+      );
+      expect((await userStorage.read())?.isPaired, isFalse);
+    });
   });
 }

@@ -38,7 +38,7 @@ final joinControllerProvider =
       JoinController.new,
     );
 
-/// 이미 연결된 상태라 페어링 화면을 건너뛰어야 하는 오류인지
+/// 이미 연결된 상태라 페어링 화면을 건너뛰어야 하는 오류인지 (자녀의 초대 숫자 발급)
 bool isAlreadyPaired(Object error) =>
     error is ApiException && error.errorCode == 'ALREADY_PAIRED';
 
@@ -53,6 +53,8 @@ String pairingErrorMessage(Object error) {
       return '이미 사용된 숫자예요. 자녀에게 새 숫자를 받아 주세요.';
     case 'INVITE_CODE_EXPIRED':
       return '시간이 지난 숫자예요. 자녀에게 새 숫자를 받아 주세요.';
+    case 'ALREADY_PAIRED': // 숫자를 만든 자녀가 이미 다른 분과 연결됨
+      return '이미 다른 분과 연결된 숫자예요. 자녀에게 확인해 주세요.';
     default:
       return error.userMessage;
   }

@@ -248,7 +248,7 @@ class _ParentJoinViewState extends ConsumerState<_ParentJoinView> {
   Widget build(BuildContext context) {
     ref.listen(joinControllerProvider, (_, next) {
       final e = next.error;
-      if (next.value == true || (e != null && isAlreadyPaired(e))) {
+      if (next.value == true) {
         context.go('/today');
       } else if (e != null) {
         handleSessionExpired(context, ref, e);
@@ -287,7 +287,7 @@ class _ParentJoinViewState extends ConsumerState<_ParentJoinView> {
             counterText: '',
           ),
         ),
-        if (state.hasError && !isAlreadyPaired(state.error!)) ...[
+        if (state.hasError) ...[
           const SizedBox(height: 16),
           Semantics(
             liveRegion: true,
