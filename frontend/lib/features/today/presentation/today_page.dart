@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,15 +11,83 @@ import '../../child_answer/presentation/widgets/question_card.dart';
 import '../../onboarding/presentation/session.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../../recording/presentation/recording_args.dart';
+import '../data/today_providers.dart';
 import '../domain/today.dart';
 import 'today_provider.dart';
 
 /// 오늘 질문 홈. 서버가 계산한 제출·공개 상태에 따라 다음 행동 하나를 보여준다.
-class TodayPage extends ConsumerWidget {
+///
+/// 내가 답하고 상대를 기다리는 동안에는 주기적으로, 앱으로 돌아왔을 때는 바로
+/// 서버 상태를 확인해서 바뀌었으면 홈을 다시 그린다.
+class TodayPage extends ConsumerStatefulWidget {
   const TodayPage({super.key});
 
+  static const waitingPollInterval = Duration(seconds: 10);
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayPage> createState() => _TodayPageState();
+}
+
+class _TodayPageState extends ConsumerState<TodayPage>
+    with WidgetsBindingObserver {
+  Timer? _poll;
+  bool _checking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _poll = Timer.periodic(TodayPage.waitingPollInterval, (_) {
+      final today = ref.read(todayProvider).value;
+      if (today != null && today.iAnswered && !today.isRevealed) {
+        _checkForChanges();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _poll?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 다른 앱에 다녀오거나 다음 날 다시 열면 상대 답이나 새 질문이 있을 수 있다
+    if (state == AppLifecycleState.resumed) _checkForChanges();
+  }
+
+  /// 화면을 로딩·오류로 바꾸지 않고 확인한 뒤, 바뀐 게 있을 때만 다시 불러온다.
+  Future<void> _checkForChanges() async {
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    final current = ref.read(todayProvider).value;
+    if (_checking ||
+        current == null ||
+        (lifecycle != null && lifecycle != AppLifecycleState.resumed) ||
+        ModalRoute.of(context)?.isCurrent == false) {
+      return; // 답하기·녹음 화면에 있으면 돌아올 때 다시 불러온다
+    }
+    _checking = true;
+    try {
+      final json = await ref.read(todayDataSourceProvider).fetchToday();
+      if (mounted && hasTodayChanged(current, Today.fromJson(json))) {
+        ref.invalidate(todayProvider);
+      }
+    } on ApiException catch (e) {
+      // 페어링 해제·로그인 만료는 다시 불러와서 기존 처리(화면 이동)에 맡긴다
+      if (mounted && (e.statusCode == 401 || e.errorCode == 'PAIR_NOT_FOUND')) {
+        ref.invalidate(todayProvider);
+      }
+    } catch (_) {
+      // 잠깐의 네트워크 오류는 다음 확인 때 다시 시도한다
+    } finally {
+      _checking = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen(todayProvider, (_, next) {
       final e = next.error;
       if (e is ApiException && e.errorCode == 'PAIR_NOT_FOUND') {
@@ -232,18 +302,18 @@ class _ParentSection extends ConsumerWidget {
 
     if (!today.isRevealed) {
       final my = today.myAnswer;
-      final processing =
-          my is VoiceAnswer &&
-          my.processingStatus != 'READY' &&
-          my.processingStatus != 'FAILED';
+      final status = my is VoiceAnswer ? my.processingStatus : null;
+      // 글 정리에 실패해도 원본 목소리는 저장되어 자녀에게 전달된다
+      final notice = switch (status) {
+        null || 'READY' => null,
+        'FAILED' => '글로 정리하지는 못했지만\n목소리는 그대로 전해져요.',
+        _ => '말씀하신 내용을 글로 정리하고 있어요.',
+      };
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _Message('목소리를 보냈어요.\n자녀가 답하면 여기에서 볼 수 있어요.'),
-          if (processing) ...[
-            const SizedBox(height: 8),
-            const _Message('말씀하신 내용을 글로 정리하고 있어요.'),
-          ],
+          if (notice != null) ...[const SizedBox(height: 8), _Message(notice)],
           const SizedBox(height: 20),
           OutlinedButton.icon(
             onPressed: () => _openRecording(context, ref),
@@ -324,6 +394,17 @@ class _AnswerCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 홈을 다시 그려야 할 만큼 서버 상태가 바뀌었는지.
+/// 음성 링크는 조회할 때마다 새로 서명되므로 비교하지 않는다.
+bool hasTodayChanged(Today before, Today after) {
+  String? processing(TodayAnswer? a) =>
+      a is VoiceAnswer ? a.processingStatus : null;
+  return before.assignmentId != after.assignmentId ||
+      before.revealStatus != after.revealStatus ||
+      before.iAnswered != after.iAnswered ||
+      processing(before.myAnswer) != processing(after.myAnswer);
 }
 
 /// 예: 9월 24일 수요일

@@ -80,8 +80,8 @@
 | 400 | `VALIDATION_ERROR`, `INVALID_AUDIO_FORMAT` | 요청값 오류 |
 | 401 | `UNAUTHORIZED`, `TOKEN_EXPIRED` | 토큰 없음·만료 |
 | 403 | `ROLE_NOT_ALLOWED`, `PAIR_ACCESS_DENIED` | 역할·소유권 오류 |
-| 404 | `USER_NOT_FOUND`, `ASSIGNMENT_NOT_FOUND` | 리소스 없음 |
-| 409 | `ALREADY_PAIRED`, `INVITE_CODE_USED`, `ANSWER_LOCKED` | 현재 상태와 충돌 |
+| 404 | `USER_NOT_FOUND`, `ASSIGNMENT_NOT_FOUND`, `INVITE_CODE_NOT_FOUND`, `TODAY_ASSIGNMENT_NOT_FOUND` | 리소스 없음 |
+| 409 | `ALREADY_PAIRED`, `PAIR_NOT_FOUND`, `INVITE_CODE_USED`, `INVITE_CODE_EXPIRED`, `ANSWER_LOCKED` | 현재 상태와 충돌 |
 | 413 | `AUDIO_FILE_TOO_LARGE` | 파일 크기 초과 |
 | 422 | `AUDIO_DURATION_OUT_OF_RANGE` | 녹음 길이 오류 |
 | 429 | `RATE_LIMITED` | 요청 빈도 제한 |
@@ -280,6 +280,15 @@ STT/LLM이 실패해도 원본 음성은 보존한다. 공개 정책상 상대�
   }
 }
 ```
+
+실패:
+
+| HTTP | `errorCode` | 상황 |
+|---|---|---|
+| 404 | `INVITE_CODE_NOT_FOUND` | 없는 숫자 |
+| 409 | `INVITE_CODE_USED` | 이미 다른 부모가 쓴 숫자 |
+| 409 | `INVITE_CODE_EXPIRED` | 유효 시간이 지난 숫자 |
+| 409 | `ALREADY_PAIRED` | 부모 또는 숫자를 만든 자녀가 이미 연결됨 |
 
 ### 5.4 오늘 상태 — `GET /today`
 
