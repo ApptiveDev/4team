@@ -105,10 +105,25 @@ class _RoleStep extends StatelessWidget {
           description: '부모님을 초대하고 글로 답해요',
           onTap: () => onSelected(UserRole.child),
         ),
+        const SizedBox(height: 32),
+        // 목소리를 남기기 전에 누가 듣는지 먼저 알린다 (경쟁 서비스 분석 인사이트 10)
+        MergeSemantics(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.lock_outline),
+              const SizedBox(width: 12),
+              Expanded(child: Text(privacyNote, style: textTheme.bodyLarge)),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
+
+/// 가족끼리만 공유된다는 안내. 서버는 연결된 두 사람에게만 답과 음성 링크를 준다.
+const privacyNote = '주고받은 목소리와 글은\n연결된 두 분만 듣고 볼 수 있어요.';
 
 class _RoleCard extends StatelessWidget {
   const _RoleCard({
