@@ -69,6 +69,18 @@ void main() {
       expect(find.text('부모님이 연결하면 자동으로 넘어가요.'), findsOneWidget);
     });
 
+    testWidgets('부모님이 연결하면 오늘 화면으로 넘어간다', (tester) async {
+      final dataSource = FakePairingDataSource(pairedAfterChecks: 2);
+      await _pump(tester, user: _user(UserRole.child), dataSource: dataSource);
+
+      await tester.pump(const Duration(seconds: 3)); // 첫 확인: 아직
+      expect(find.text('오늘 화면'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 3)); // 두 번째 확인: 연결됨
+      await tester.pumpAndSettle();
+      expect(find.text('오늘 화면'), findsOneWidget);
+    });
+
     testWidgets('숫자의 유효 시간이 지나면 새 숫자를 받아 보여준다', (tester) async {
       final dataSource = FakePairingDataSource(
         inviteCode: '111111',
@@ -111,18 +123,6 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
 
-      expect(find.text('오늘 화면'), findsOneWidget);
-    });
-
-    testWidgets('부모님이 연결하면 오늘 화면으로 넘어간다', (tester) async {
-      final dataSource = FakePairingDataSource(pairedAfterChecks: 2);
-      await _pump(tester, user: _user(UserRole.child), dataSource: dataSource);
-
-      await tester.pump(const Duration(seconds: 3)); // 첫 확인: 아직
-      expect(find.text('오늘 화면'), findsNothing);
-
-      await tester.pump(const Duration(seconds: 3)); // 두 번째 확인: 연결됨
-      await tester.pumpAndSettle();
       expect(find.text('오늘 화면'), findsOneWidget);
     });
 
