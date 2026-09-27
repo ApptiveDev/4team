@@ -1,4 +1,4 @@
-# Frontend — life_record (Flutter)
+# Frontend — 들려줘요 (Flutter)
 
 부모·자녀 1:1 질문 답변 앱의 Flutter 클라이언트입니다. MVP 대상 플랫폼은 **Android**입니다.
 
@@ -15,6 +15,7 @@
 | Flutter | 3.47.5 (stable) |
 | Android NDK | 28.2.13676358 |
 | 패키지명 / Application ID | `life_record` / `com.apptive.life_record` |
+| 앱 표시 이름 | 들려줘요 (`android/app/src/main/AndroidManifest.xml`의 `android:label`). 패키지명은 그대로 둔다 |
 
 스캐폴드 시점 `flutter --version` 결과:
 
