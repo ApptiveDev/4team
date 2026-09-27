@@ -3,15 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/widgets/audio_playback_card.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../child_answer/presentation/child_answer_args.dart';
 import '../../child_answer/presentation/widgets/question_card.dart';
 import '../../onboarding/presentation/session.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../../recording/presentation/recording_args.dart';
+import '../data/today_providers.dart';
 import '../domain/today.dart';
 import 'today_provider.dart';
-import '../../../core/widgets/audio_playback_card.dart';
 
 /// 오늘 질문 홈. 서버가 계산한 제출·공개 상태에 따라 다음 행동 하나를 보여준다.
 class TodayPage extends ConsumerWidget {
@@ -193,8 +194,8 @@ class _ChildSection extends ConsumerWidget {
             ),
             label: '부모님 목소리 듣기',
             onRefresh: () async {
-              final fresh = await ref.refresh(todayProvider.future);
-              final p = fresh.partnerAnswer;
+              final json = await ref.read(todayDataSourceProvider).fetchToday();
+              final p = Today.fromJson(json).partnerAnswer;
               if (p is! VoiceAnswer || p.originalAudioUrl == null) {
                 throw StateError('음성을 다시 불러오지 못했어요');
               }
