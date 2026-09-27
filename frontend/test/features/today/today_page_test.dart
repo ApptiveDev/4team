@@ -108,6 +108,21 @@ void main() {
     });
   });
 
+  testWidgets('공개되고 원본 음성이 있으면 부모님 목소리 듣기 카드를 보여준다', (tester) async {
+    await _pump(tester, FakeTodayDataSource(json: todayFixture('revealed')));
+
+    expect(find.text('부모님 목소리 듣기'), findsOneWidget);
+  });
+
+  testWidgets('원본 음성 URL이 없으면 재생 카드를 보여주지 않는다', (tester) async {
+    final json = todayFixture('revealed');
+    (json['partnerAnswer'] as Map<String, dynamic>)['originalAudioUrl'] = null;
+    await _pump(tester, FakeTodayDataSource(json: json));
+
+    expect(find.text('부모님의 답'), findsOneWidget); // 답 카드는 그대로 보이고
+    expect(find.text('부모님 목소리 듣기'), findsNothing);
+  });
+
   group('부모님', () {
     testWidgets('아직 답하지 않았으면 목소리로 답하기로 녹음 화면을 연다', (tester) async {
       final json = todayFixture('waiting_for_both')..['viewerRole'] = 'PARENT';

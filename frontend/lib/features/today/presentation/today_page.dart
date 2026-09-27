@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/widgets/audio_playback_card.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../child_answer/presentation/child_answer_args.dart';
 import '../../child_answer/presentation/widgets/question_card.dart';
 import '../../onboarding/presentation/session.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../../recording/presentation/recording_args.dart';
+import '../data/today_providers.dart';
 import '../domain/today.dart';
 import 'today_provider.dart';
 
@@ -183,7 +185,27 @@ class _ChildSection extends ConsumerWidget {
               : '부모님이 목소리로 답하셨어요.',
           highlighted: true,
         ),
-        // TODO(C): 원본 음성 재생·자막이 있는 공개 답변 화면이 생기면 여기서 연결
+        if (parent is VoiceAnswer && parent.originalAudioUrl != null) ...[
+          const SizedBox(height: 12),
+          AudioPlaybackCard(
+            source: PlaybackSource(
+              parent.originalAudioUrl!,
+              expiresAt: parent.originalAudioExpiresAt,
+            ),
+            label: '부모님 목소리 듣기',
+            onRefresh: () async {
+              final json = await ref.read(todayDataSourceProvider).fetchToday();
+              final p = Today.fromJson(json).partnerAnswer;
+              if (p is! VoiceAnswer || p.originalAudioUrl == null) {
+                throw StateError('음성을 다시 불러오지 못했어요');
+              }
+              return PlaybackSource(
+                p.originalAudioUrl!,
+                expiresAt: p.originalAudioExpiresAt,
+              );
+            },
+          ),
+        ],
         if (myText != null) ...[
           const SizedBox(height: 16),
           _AnswerCard(label: '내 답', text: myText),
