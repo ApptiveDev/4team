@@ -11,6 +11,7 @@ import '../../onboarding/domain/app_user.dart';
 import '../../onboarding/presentation/session.dart';
 import '../data/pairing_providers.dart';
 import '../domain/pairing_repository.dart';
+import 'invite_share.dart';
 import 'pairing_controller.dart';
 
 /// 자녀는 초대 코드를 보여주며 연결을 기다리고, 부모는 코드를 입력한다.
@@ -115,9 +116,21 @@ class _ChildInviteViewState extends ConsumerState<_ChildInviteView> {
   }
 }
 
-class _InviteContent extends StatelessWidget {
+class _InviteContent extends ConsumerWidget {
   const _InviteContent({required this.invitation});
   final Invitation invitation;
+
+  Future<void> _share(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(shareTextProvider)(inviteShareMessage(invitation));
+    } catch (_) {
+      // 공유 창을 못 열면 복사로 안내한다
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('보내기를 열지 못했어요. 숫자를 복사해서 보내 주세요.')),
+      );
+    }
+  }
 
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(ClipboardData(text: invitation.inviteCode));
@@ -127,7 +140,7 @@ class _InviteContent extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final code = invitation.inviteCode;
     final spaced = code.length == 6
@@ -174,7 +187,16 @@ class _InviteContent extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         FilledButton.icon(
+          onPressed: () => _share(context, ref),
+          icon: const Icon(Icons.send),
+          label: const Text('부모님께 보내기'),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
           onPressed: () => _copy(context),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(56),
+          ),
           icon: const Icon(Icons.copy),
           label: const Text('숫자 복사하기'),
         ),
