@@ -28,7 +28,7 @@ void main() {
     final invitation = await repo.createInvitation();
 
     expect(invitation.inviteCode, '482913');
-    expect(invitation.expiresAt, DateTime.parse('2026-09-26T21:10:00+09:00'));
+    expect(invitation.expiresAt, DateTime.parse('2099-09-26T21:10:00+09:00'));
   });
 
   test('연결에 성공하면 저장된 사용자를 PAIRED로 바꾼다', () async {

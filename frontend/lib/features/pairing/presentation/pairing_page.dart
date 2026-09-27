@@ -55,21 +55,51 @@ class _ChildInviteView extends ConsumerStatefulWidget {
   ConsumerState<_ChildInviteView> createState() => _ChildInviteViewState();
 }
 
-class _ChildInviteViewState extends ConsumerState<_ChildInviteView> {
+class _ChildInviteViewState extends ConsumerState<_ChildInviteView>
+    with WidgetsBindingObserver {
   static const pollInterval = Duration(seconds: 3);
   Timer? _poll;
   bool _checking = false;
 
+  /// 만료돼서 새로 받은 숫자. 기기 시각이 틀려도 같은 숫자로 계속 다시 받지 않는다.
+  String? _expiredCode;
+
   @override
   void initState() {
     super.initState();
-    _poll = Timer.periodic(pollInterval, (_) => _checkPaired());
+    WidgetsBinding.instance.addObserver(this);
+    _poll = Timer.periodic(pollInterval, (_) => _onTick());
   }
 
   @override
   void dispose() {
     _poll?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 초대 화면을 켜 둔 채 다음 날 돌아와도 바로 확인한다
+    if (state == AppLifecycleState.resumed) _onTick();
+  }
+
+  void _onTick() {
+    _refreshIfExpired();
+    _checkPaired();
+  }
+
+  /// 유효 시간이 지난 숫자를 보여주고 있으면 새 숫자를 받는다.
+  /// 서버는 만료된 초대 대신 새 초대를 만들어 준다.
+  void _refreshIfExpired() {
+    final invitation = ref.read(invitationProvider).value;
+    if (invitation == null ||
+        invitation.inviteCode == _expiredCode ||
+        DateTime.now().isBefore(invitation.expiresAt)) {
+      return;
+    }
+    _expiredCode = invitation.inviteCode;
+    ref.invalidate(invitationProvider);
   }
 
   Future<void> _checkPaired() async {
@@ -94,6 +124,15 @@ class _ChildInviteViewState extends ConsumerState<_ChildInviteView> {
   @override
   Widget build(BuildContext context) {
     ref.listen(invitationProvider, (_, next) {
+      final code = next.value?.inviteCode;
+      if (_expiredCode != null && code != null && code != _expiredCode) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('시간이 지나 새 숫자로 바뀌었어요.\n부모님께 새 숫자를 알려 주세요.'),
+          ),
+        );
+        _expiredCode = null;
+      }
       final e = next.error;
       if (e == null) return;
       if (isAlreadyPaired(e)) {
