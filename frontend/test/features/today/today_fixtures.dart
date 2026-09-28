@@ -23,7 +23,7 @@ class FakeTodayDataSource implements TodayDataSource {
 
   /// 테스트 중 바꿔서 서버 상태 변화를 흉내 낸다
   Map<String, dynamic>? json;
-  final Object? error;
+  Object? error;
   int calls = 0;
 
   @override
