@@ -69,6 +69,21 @@ flutter:
     - assets/mocks/
     - assets/audio/
 
+  # 디자인 글꼴. 출처·라이선스는 assets/fonts/README.md
+  fonts:
+    - family: KoddiUDOnGothic
+      fonts:
+        - asset: assets/fonts/KoddiUDOnGothic-Regular.ttf
+        - asset: assets/fonts/KoddiUDOnGothic-Bold.ttf
+          weight: 700
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

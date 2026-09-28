@@ -13,6 +13,7 @@ import 'package:life_record/features/pairing/presentation/invite_share.dart';
 import 'package:life_record/features/pairing/presentation/pairing_page.dart';
 
 import 'fake_pairing_data_source.dart';
+import '../../helpers/phone_size.dart';
 
 AppUser _user(UserRole role) => AppUser(
   id: 'usr_test',
@@ -27,6 +28,7 @@ Future<void> _pump(
   required FakePairingDataSource dataSource,
   Future<void> Function(String text)? share,
 }) async {
+  usePhoneSize(tester);
   final router = GoRouter(
     initialLocation: '/pairing',
     routes: [

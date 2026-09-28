@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../onboarding/data/auth_providers.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../../onboarding/presentation/session.dart';
+import '../../onboarding/presentation/widgets/step_header.dart';
 import '../data/pairing_providers.dart';
 import '../domain/pairing_repository.dart';
 import 'expiry_format.dart';
@@ -149,55 +151,57 @@ class _InviteContent extends ConsumerWidget {
         : code;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+      padding: _sidePadding,
       children: [
-        Text('부모님을 초대해 주세요', style: theme.textTheme.headlineMedium),
-        const SizedBox(height: 12),
+        const StepHeader(step: 3),
+        const SizedBox(height: 64),
         Text(
-          '부모님 휴대폰에서 이 앱을 열고 "부모님"을 고른 뒤, 아래 숫자를 입력하시면 연결돼요.',
+          '부모님을\n초대해 주세요',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.headlineMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '아래 숫자를\n부모님께 전달해 주세요',
+          textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge,
         ),
-        const SizedBox(height: 32),
-        Semantics(
-          label: '초대 숫자 ${code.split('').join(' ')}',
-          excludeSemantics: true,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 28),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              spaced,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 6,
-                color: theme.colorScheme.onPrimaryContainer,
-                fontFeatures: const [FontFeature.tabularFigures()],
+        const SizedBox(height: 40),
+        Center(
+          child: Semantics(
+            label: '초대 숫자 ${code.split('').join(' ')}',
+            excludeSemantics: true,
+            child: Container(
+              width: 240,
+              height: 100,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(AppRadius.button),
+                boxShadow: AppShadows.numberBox,
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(spaced, style: AppText.number),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           '${formatExpiry(invitation.expiresAt)}까지 쓸 수 있어요.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 40),
         FilledButton.icon(
           onPressed: () => _share(context, ref),
           icon: const Icon(Icons.send),
           label: const Text('부모님께 보내기'),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         OutlinedButton.icon(
           onPressed: () => _copy(context),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(56),
-          ),
           icon: const Icon(Icons.copy),
           label: const Text('숫자 복사하기'),
         ),
@@ -218,10 +222,14 @@ class _InviteContent extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
 }
+
+/// 좌우 여백. 버튼(331)이 393 화면 가운데 오도록 한다.
+const _sidePadding = EdgeInsets.symmetric(horizontal: 31);
 
 class _ParentJoinView extends ConsumerStatefulWidget {
   const _ParentJoinView();
@@ -274,31 +282,47 @@ class _ParentJoinViewState extends ConsumerState<_ParentJoinView> {
     final canSubmit = _code.text.length == codeLength && !state.isLoading;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+      padding: _sidePadding.add(const EdgeInsets.only(bottom: 24)),
       children: [
-        Text('자녀와 연결해요', style: theme.textTheme.headlineMedium),
-        const SizedBox(height: 12),
-        Text('자녀에게 받은\n숫자 6자리를 입력해 주세요.', style: theme.textTheme.bodyLarge),
-        const SizedBox(height: 32),
-        TextField(
-          controller: _code,
-          enabled: !state.isLoading,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          maxLength: codeLength,
+        const StepHeader(step: 3),
+        const SizedBox(height: 64),
+        Text(
+          '자녀와 연결해요',
           textAlign: TextAlign.center,
-          textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
-          style: const TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 10,
+          style: theme.textTheme.headlineMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '자녀에게 받은\n숫자 6자리를 입력해 주세요',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 40),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.button),
+            boxShadow: AppShadows.numberBox,
           ),
-          decoration: const InputDecoration(
-            hintText: '000000',
-            border: OutlineInputBorder(),
-            counterText: '',
+          child: TextField(
+            controller: _code,
+            enabled: !state.isLoading,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            maxLength: codeLength,
+            textAlign: TextAlign.center,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            style: AppText.number.copyWith(fontSize: 44, letterSpacing: 8),
+            decoration: InputDecoration(
+              hintText: '000000',
+              hintStyle: AppText.number.copyWith(
+                fontSize: 44,
+                letterSpacing: 8,
+                color: AppColors.disabled,
+              ),
+              counterText: '',
+            ),
           ),
         ),
         if (state.hasError) ...[
@@ -322,13 +346,16 @@ class _ParentJoinViewState extends ConsumerState<_ParentJoinView> {
             ),
           ),
         ],
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
         FilledButton(
           onPressed: canSubmit ? _submit : null,
           child: state.isLoading
               ? const SizedBox.square(
                   dimension: 28,
-                  child: CircularProgressIndicator(strokeWidth: 3),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: AppColors.bg,
+                  ),
                 )
               : const Text('연결하기'),
         ),

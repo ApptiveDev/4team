@@ -13,6 +13,6 @@ void main() {
     await tester.pumpAndSettle(); // 화면 이동이 끝날 때까지 대기
 
     // 첫 화면(/onboarding)의 역할 선택 질문이 보이는지 확인
-    expect(find.text('누가 사용하시나요?'), findsOneWidget);
+    expect(find.text('누구로 시작할까요?'), findsOneWidget);
   });
 }
