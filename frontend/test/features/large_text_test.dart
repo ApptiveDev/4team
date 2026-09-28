@@ -92,9 +92,12 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        expect(find.text('누가 사용하시나요?'), findsOneWidget);
+        expect(find.text('누구로 시작할까요?'), findsOneWidget);
 
-        await tester.tap(find.text('부모님'));
+        // 글씨가 크면 카드가 화면 아래로 밀리지만 스크롤로 닿아야 한다
+        await tester.ensureVisible(find.text('부모님이에요'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('부모님이에요'));
         await tester.pumpAndSettle();
         expect(find.text('성함을 알려주세요'), findsOneWidget);
       });
