@@ -564,3 +564,4 @@ frontend/
 | 날짜 | 버전 | 변경 내용 |
 |---|---|---|
 | 2026-09-24 | v0 | MVP API 분리, 공통 규칙·전체 요청/응답·Mock 계약 확정 |
+| 2026-09-28 | v0 | 공통 오류 표와 `POST /pairs/join` 실패 응답에 `INVITE_CODE_NOT_FOUND`, `INVITE_CODE_EXPIRED`, `PAIR_NOT_FOUND`, `TODAY_ASSIGNMENT_NOT_FOUND` 추가 (백엔드 구현과 맞춤) |

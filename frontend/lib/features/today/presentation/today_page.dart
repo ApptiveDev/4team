@@ -17,7 +17,7 @@ import 'today_provider.dart';
 
 /// 오늘 질문 홈. 서버가 계산한 제출·공개 상태에 따라 다음 행동 하나를 보여준다.
 ///
-/// 내가 답하고 상대를 기다리는 동안에는 주기적으로, 앱으로 돌아왔을 때는 바로
+/// 상대를 기다리거나 음성을 정리하는 동안에는 주기적으로, 앱으로 돌아왔을 때는 바로
 /// 서버 상태를 확인해서 바뀌었으면 홈을 다시 그린다.
 class TodayPage extends ConsumerStatefulWidget {
   const TodayPage({super.key});
@@ -39,9 +39,7 @@ class _TodayPageState extends ConsumerState<TodayPage>
     WidgetsBinding.instance.addObserver(this);
     _poll = Timer.periodic(TodayPage.waitingPollInterval, (_) {
       final today = ref.read(todayProvider).value;
-      if (today != null && today.iAnswered && !today.isRevealed) {
-        _checkForChanges();
-      }
+      if (today != null && shouldWatchToday(today)) _checkForChanges();
     });
   }
 
@@ -399,13 +397,31 @@ class _AnswerCard extends StatelessWidget {
 /// 홈을 다시 그려야 할 만큼 서버 상태가 바뀌었는지.
 /// 음성 링크는 조회할 때마다 새로 서명되므로 비교하지 않는다.
 bool hasTodayChanged(Today before, Today after) {
-  String? processing(TodayAnswer? a) =>
-      a is VoiceAnswer ? a.processingStatus : null;
   return before.assignmentId != after.assignmentId ||
       before.revealStatus != after.revealStatus ||
       before.iAnswered != after.iAnswered ||
-      processing(before.myAnswer) != processing(after.myAnswer);
+      _processing(before.myAnswer) != _processing(after.myAnswer) ||
+      _processing(before.partnerAnswer) != _processing(after.partnerAnswer);
 }
+
+/// 서버 상태가 더 바뀔 수 있어 주기적으로 확인해야 하는지.
+///
+/// 상대를 기다리는 중이거나, 공개됐어도 부모 음성을 아직 글로 정리하는 중이면
+/// 확인한다. 자녀가 먼저 답하면 부모가 올리자마자 공개되므로 자녀 화면에서도
+/// 정리 결과(READY/FAILED)를 기다려야 한다.
+bool shouldWatchToday(Today today) {
+  bool processing(TodayAnswer? a) {
+    final status = _processing(a);
+    return status != null && status != 'READY' && status != 'FAILED';
+  }
+
+  return (today.iAnswered && !today.isRevealed) ||
+      processing(today.myAnswer) ||
+      processing(today.partnerAnswer);
+}
+
+String? _processing(TodayAnswer? a) =>
+    a is VoiceAnswer ? a.processingStatus : null;
 
 /// 예: 9월 24일 수요일
 String formatAssignedDate(DateTime date) {

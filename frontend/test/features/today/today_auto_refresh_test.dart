@@ -106,6 +106,41 @@ void main() {
     });
   });
 
+  group('공개된 뒤에도 부모 음성을 정리하는 중이면', () {
+    Map<String, dynamic> revealedWhileProcessing() {
+      final json = todayFixture('revealed');
+      (json['partnerAnswer'] as Map<String, dynamic>)
+        ..['processingStatus'] = 'LLM_PROCESSING'
+        ..['sttText'] = null
+        ..['summaryText'] = null
+        ..['processingNotice'] = null;
+      return json;
+    }
+
+    testWidgets('자녀 화면이 정리 결과까지 기다렸다가 보여준다', (tester) async {
+      final source = FakeTodayDataSource(json: revealedWhileProcessing());
+      await _pump(tester, source);
+      expect(find.text('부모님이 목소리로 답하셨어요.'), findsOneWidget);
+
+      source.json = todayFixture('revealed'); // 정리 완료(READY)
+      await tester.pump(_interval);
+      await tester.pumpAndSettle();
+
+      final summary =
+          (todayFixture('revealed')['partnerAnswer'] as Map)['summaryText'];
+      expect(find.text(summary as String), findsOneWidget);
+    });
+
+    testWidgets('정리가 끝나면 더 확인하지 않는다', (tester) async {
+      final source = FakeTodayDataSource(json: todayFixture('revealed'));
+      await _pump(tester, source);
+
+      await tester.pump(_interval * 3);
+
+      expect(source.calls, 1);
+    });
+  });
+
   testWidgets('아직 내가 답하지 않았으면 주기적으로 확인하지 않는다', (tester) async {
     final source = FakeTodayDataSource(json: todayFixture('waiting_for_both'));
     await _pump(tester, source);
@@ -162,6 +197,15 @@ void main() {
       final json = todayFixture('revealed');
       json['partnerAnswer']['originalAudioUrl'] = 'https://example.com/new';
       expect(hasTodayChanged(before, parse(json)), isFalse);
+    });
+
+    test('상대 음성의 처리 상태가 바뀌면 바뀐 것으로 본다', () {
+      final processing = todayFixture('revealed');
+      processing['partnerAnswer']['processingStatus'] = 'LLM_PROCESSING';
+      expect(
+        hasTodayChanged(parse(processing), parse(todayFixture('revealed'))),
+        isTrue,
+      );
     });
 
     test('공개 상태·질문·처리 상태가 바뀌면 바뀐 것으로 본다', () {
