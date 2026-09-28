@@ -1,3 +1,4 @@
+import '../../../core/network/api_exception.dart';
 import '../../onboarding/data/user_storage.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../domain/pairing_repository.dart';
@@ -15,7 +16,14 @@ class PairingRepositoryImpl implements PairingRepository {
 
   @override
   Future<void> join(String inviteCode) async {
-    await _dataSource.join(inviteCode);
+    try {
+      await _dataSource.join(inviteCode);
+    } on ApiException catch (e) {
+      // 부모가 이미 연결됐으면 성공과 같다. 숫자를 만든 자녀가 다른 부모와
+      // 연결된 경우에도 같은 오류가 오므로 실제 연결 여부를 확인한다.
+      if (e.errorCode != 'ALREADY_PAIRED' || !await isPaired()) rethrow;
+      return;
+    }
     await _markPaired();
   }
 

@@ -130,6 +130,42 @@ void main() {
       expect(find.text('오늘 화면'), findsOneWidget);
     });
 
+    testWidgets('이미 연결돼 있으면 오늘 화면으로 넘어간다', (tester) async {
+      await _pump(
+        tester,
+        user: _user(UserRole.parent),
+        dataSource: FakePairingDataSource(
+          joinError: ApiException(statusCode: 409, errorCode: 'ALREADY_PAIRED'),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '482913');
+      await tester.pump();
+      await tester.tap(find.text('연결하기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('오늘 화면'), findsOneWidget);
+    });
+
+    testWidgets('자녀가 이미 다른 분과 연결된 숫자면 머물며 안내한다', (tester) async {
+      await _pump(
+        tester,
+        user: _user(UserRole.parent),
+        dataSource: FakePairingDataSource(
+          joinError: ApiException(statusCode: 409, errorCode: 'ALREADY_PAIRED'),
+          pairedAfterChecks: 99,
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '482913');
+      await tester.pump();
+      await tester.tap(find.text('연결하기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('오늘 화면'), findsNothing);
+      expect(find.text('이미 다른 분과 연결된 숫자예요. 자녀에게 확인해 주세요.'), findsOneWidget);
+    });
+
     testWidgets('이미 사용된 숫자면 새 숫자를 받으라고 안내한다', (tester) async {
       await _pump(
         tester,
