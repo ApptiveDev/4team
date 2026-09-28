@@ -7,6 +7,9 @@ import 'package:life_record/core/network/api_exception.dart';
 import 'package:life_record/features/onboarding/data/auth_providers.dart';
 import 'package:life_record/features/onboarding/domain/app_user.dart';
 import 'package:life_record/features/pairing/data/pairing_providers.dart';
+import 'package:life_record/features/pairing/domain/pairing_repository.dart';
+import 'package:life_record/features/pairing/presentation/expiry_format.dart';
+import 'package:life_record/features/pairing/presentation/invite_share.dart';
 import 'package:life_record/features/pairing/presentation/pairing_page.dart';
 
 import 'fake_pairing_data_source.dart';
@@ -22,6 +25,7 @@ Future<void> _pump(
   WidgetTester tester, {
   required AppUser? user,
   required FakePairingDataSource dataSource,
+  Future<void> Function(String text)? share,
 }) async {
   final router = GoRouter(
     initialLocation: '/pairing',
@@ -36,6 +40,7 @@ Future<void> _pump(
       overrides: [
         currentUserProvider.overrideWith((ref) async => user),
         pairingDataSourceProvider.overrideWithValue(dataSource),
+        shareTextProvider.overrideWithValue(share ?? (_) async {}),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -67,6 +72,37 @@ void main() {
 
       expect(find.text('482 913'), findsOneWidget);
       expect(find.text('부모님이 연결하면 자동으로 넘어가요.'), findsOneWidget);
+    });
+
+    testWidgets('부모님께 보내기를 누르면 숫자와 방법을 담아 공유 창을 연다', (tester) async {
+      final shared = <String>[];
+      await _pump(
+        tester,
+        user: _user(UserRole.child),
+        dataSource: FakePairingDataSource(pairedAfterChecks: 99),
+        share: (text) async => shared.add(text),
+      );
+
+      await tester.tap(find.text('부모님께 보내기'));
+      await tester.pump();
+
+      expect(shared, hasLength(1));
+      expect(shared.single, contains('482 913'));
+      expect(shared.single, contains('"부모님"을 고른 뒤'));
+    });
+
+    testWidgets('공유 창을 못 열면 복사해서 보내라고 안내한다', (tester) async {
+      await _pump(
+        tester,
+        user: _user(UserRole.child),
+        dataSource: FakePairingDataSource(pairedAfterChecks: 99),
+        share: (_) async => throw Exception('no share sheet'),
+      );
+
+      await tester.tap(find.text('부모님께 보내기'));
+      await tester.pump();
+
+      expect(find.text('보내기를 열지 못했어요. 숫자를 복사해서 보내 주세요.'), findsOneWidget);
     });
 
     testWidgets('부모님이 연결하면 오늘 화면으로 넘어간다', (tester) async {
@@ -216,5 +252,14 @@ void main() {
   test('만료 시각을 오전·오후로 보여준다', () {
     expect(formatExpiry(DateTime(2026, 9, 26, 21, 10)), '9월 26일 오후 9:10');
     expect(formatExpiry(DateTime(2026, 9, 26, 0, 5)), '9월 26일 오전 12:05');
+  });
+
+  test('초대 문구에 띄어 쓴 숫자와 쓸 수 있는 시각을 넣는다', () {
+    final message = inviteShareMessage(
+      Invitation(inviteCode: '482913', expiresAt: DateTime(2026, 9, 28, 21, 6)),
+    );
+
+    expect(message, startsWith('[들려줘요] 초대 숫자: 482 913\n'));
+    expect(message, contains('9월 28일 오후 9:06까지'));
   });
 }

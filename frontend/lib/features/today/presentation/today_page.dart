@@ -9,6 +9,7 @@ import '../../../core/widgets/audio_playback_card.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../child_answer/presentation/child_answer_args.dart';
 import '../../child_answer/presentation/widgets/question_card.dart';
+import '../../onboarding/data/auth_providers.dart';
 import '../../onboarding/presentation/session.dart';
 import '../../onboarding/domain/app_user.dart';
 import '../../recording/presentation/recording_args.dart';
@@ -143,6 +144,8 @@ class _TodayContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
+    // 가입할 때 저장한 이름. 읽는 중이거나 없으면 인사 없이 보여준다.
+    final name = ref.watch(currentUserProvider).value?.name;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(), // 당겨서 새로고침
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
@@ -151,6 +154,10 @@ class _TodayContent extends ConsumerWidget {
           formatAssignedDate(today.assignedDate),
           style: textTheme.bodyLarge,
         ),
+        if (name != null && name.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text('$name님, 안녕하세요', style: textTheme.headlineSmall),
+        ],
         const SizedBox(height: 12),
         QuestionCard(questionText: today.question.text),
         const SizedBox(height: 24),

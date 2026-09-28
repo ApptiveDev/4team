@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:life_record/core/network/api_exception.dart';
@@ -61,6 +62,9 @@ Future<_Harness> _pump(WidgetTester tester, FakeTodayDataSource source) async {
 }
 
 void main() {
+  // 홈 인사말이 저장된 사용자 이름을 읽는다
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+
   group('자녀', () {
     testWidgets('아직 답하지 않았으면 답하기로 자녀 답변 화면을 연다', (tester) async {
       final harness = await _pump(
@@ -198,6 +202,28 @@ void main() {
     await tester.tap(find.text('다시 시도'));
     await tester.pumpAndSettle();
     expect(source.calls, 2);
+  });
+
+  testWidgets('저장된 이름으로 인사한다', (tester) async {
+    FlutterSecureStorage.setMockInitialValues({
+      'current_user': '{"id":"usr_test","name":"김민지","role":"CHILD","pairingStatus":"PAIRED"}',
+    });
+    await _pump(
+      tester,
+      FakeTodayDataSource(json: todayFixture('waiting_for_both')),
+    );
+
+    expect(find.text('김민지님, 안녕하세요'), findsOneWidget);
+  });
+
+  testWidgets('이름을 모르면 인사 없이 보여준다', (tester) async {
+    await _pump(
+      tester,
+      FakeTodayDataSource(json: todayFixture('waiting_for_both')),
+    );
+
+    expect(find.textContaining('안녕하세요'), findsNothing);
+    expect(find.text('답하기'), findsOneWidget);
   });
 
   testWidgets('지난 이야기로 갈 수 있다', (tester) async {
