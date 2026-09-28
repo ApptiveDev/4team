@@ -20,10 +20,10 @@ import org.springframework.web.client.RestClient;
 
 import com.apptive.backend.domain.recording.service.AudioProcessingException;
 
-class OpenAiStorySummarizerTest {
+class OpenAiSpeechSynthesizerTest {
 
 	private MockRestServiceServer server;
-	private OpenAiStorySummarizer summarizer;
+	private OpenAiSpeechSynthesizer synthesizer;
 
 	@BeforeEach
 	void setUp() {
@@ -39,56 +39,35 @@ class OpenAiStorySummarizerTest {
 			Duration.ofSeconds(1),
 			Duration.ofSeconds(5)
 		);
-		summarizer = new OpenAiStorySummarizer(
+		synthesizer = new OpenAiSpeechSynthesizer(
 			builder.baseUrl(properties.baseUrl()).build(),
 			properties
 		);
 	}
 
 	@Test
-	void summarizesTranscriptWithoutStoringResponse() {
-		server.expect(requestTo("https://api.openai.test/v1/responses"))
+	void synthesizesChildAnswerAsMp3() {
+		byte[] expected = new byte[] {1, 2, 3, 4};
+		server.expect(requestTo("https://api.openai.test/v1/audio/speech"))
 			.andExpect(method(HttpMethod.POST))
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-			.andExpect(content().string(containsString("\"store\":false")))
-			.andExpect(content().string(containsString("어릴 때 고무줄놀이를 했어요")))
-			.andExpect(content().string(containsString("원문에 없는 사람")))
-			.andRespond(withSuccess(
-				"{\"output_text\":\"어릴 때 동네에서 고무줄놀이를 했어요.\"}",
-				MediaType.APPLICATION_JSON
-			));
+			.andExpect(content().string(containsString("\"model\":\"gpt-4o-mini-tts\"")))
+			.andExpect(content().string(containsString("\"voice\":\"alloy\"")))
+			.andExpect(content().string(containsString("자녀의 답변입니다")))
+			.andRespond(withSuccess(expected, MediaType.valueOf("audio/mpeg")));
 
-		String summary = summarizer.summarize("어릴 때 고무줄놀이를 했어요");
-
-		assertThat(summary).isEqualTo("어릴 때 동네에서 고무줄놀이를 했어요.");
+		assertThat(synthesizer.synthesize("자녀의 답변입니다")).isEqualTo(expected);
 		server.verify();
 	}
 
 	@Test
-	void readsTextFromRawResponseOutput() {
-		server.expect(requestTo("https://api.openai.test/v1/responses"))
-			.andRespond(withSuccess(
-				"""
-				{
-				  "output": [{
-				    "content": [{"type":"output_text","text":"정리된 이야기입니다."}]
-				  }]
-				}
-				""",
-				MediaType.APPLICATION_JSON
-			));
-
-		assertThat(summarizer.summarize("원문입니다.")).isEqualTo("정리된 이야기입니다.");
-	}
-
-	@Test
 	void mapsProviderFailure() {
-		server.expect(requestTo("https://api.openai.test/v1/responses"))
+		server.expect(requestTo("https://api.openai.test/v1/audio/speech"))
 			.andRespond(withServerError());
 
-		assertThatThrownBy(() -> summarizer.summarize("원문입니다."))
+		assertThatThrownBy(() -> synthesizer.synthesize("답변"))
 			.isInstanceOf(AudioProcessingException.class)
 			.satisfies(exception -> assertThat(((AudioProcessingException) exception).failureCode())
-				.isEqualTo("OPENAI_LLM_FAILED"));
+				.isEqualTo("OPENAI_TTS_FAILED"));
 	}
 }

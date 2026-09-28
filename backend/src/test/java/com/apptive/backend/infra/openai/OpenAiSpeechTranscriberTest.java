@@ -36,6 +36,8 @@ class OpenAiSpeechTranscriberTest {
 			"https://api.openai.test/v1",
 			"gpt-4o-mini-transcribe",
 			"gpt-4o-mini",
+			"gpt-4o-mini-tts",
+			"alloy",
 			Duration.ofSeconds(1),
 			Duration.ofSeconds(5)
 		);

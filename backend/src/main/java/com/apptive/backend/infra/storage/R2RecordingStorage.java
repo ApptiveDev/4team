@@ -62,6 +62,22 @@ public class R2RecordingStorage implements RecordingStorage {
 	}
 
 	@Override
+	public String storeAnswerAudio(String answerId, byte[] audio) {
+		String objectKey = "tts/" + answerId + "/" + UUID.randomUUID() + ".mp3";
+		PutObjectRequest request = PutObjectRequest.builder()
+			.bucket(properties.bucketName())
+			.key(objectKey)
+			.contentType("audio/mpeg")
+			.build();
+		try {
+			s3Client.putObject(request, RequestBody.fromBytes(audio));
+			return objectKey;
+		} catch (SdkException exception) {
+			throw new ApiException(ErrorCode.STORAGE_ERROR);
+		}
+	}
+
+	@Override
 	public byte[] read(String objectKey) {
 		try {
 			GetObjectRequest request = GetObjectRequest.builder()

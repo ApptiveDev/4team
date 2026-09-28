@@ -48,6 +48,7 @@ Spring Boot는 `.env`를 자동으로 읽지 않는다. IntelliJ로 실행한다
 | `STORAGE_TYPE` | `local`(기본) 또는 `r2` |
 | `AUDIO_PROCESSING_MODE` | `mock`(기본) 또는 `openai` |
 | `OPENAI_TRANSCRIPTION_MODEL`, `OPENAI_SUMMARY_MODEL` | STT·이야기 정리 모델 |
+| `OPENAI_TTS_MODEL`, `OPENAI_TTS_VOICE` | 자녀 답변 음성 합성 모델·목소리 |
 | `JPA_SHOW_SQL` | 로컬 SQL 출력 여부, 기본 `false` |
 | `JPA_DDL_AUTO` | 로컬 기본 `update`; 운영 배포 전 migration 도구로 교체 |
 

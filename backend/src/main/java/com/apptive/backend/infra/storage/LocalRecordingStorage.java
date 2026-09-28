@@ -56,6 +56,19 @@ public class LocalRecordingStorage implements RecordingStorage {
 	}
 
 	@Override
+	public String storeAnswerAudio(String answerId, byte[] audio) {
+		String objectKey = "tts/" + answerId + "/" + UUID.randomUUID() + ".mp3";
+		Path destination = resolveSafely(objectKey);
+		try {
+			Files.createDirectories(destination.getParent());
+			Files.write(destination, audio);
+			return objectKey;
+		} catch (IOException exception) {
+			throw new ApiException(ErrorCode.STORAGE_ERROR);
+		}
+	}
+
+	@Override
 	public void delete(String objectKey) {
 		if (objectKey == null) {
 			return;

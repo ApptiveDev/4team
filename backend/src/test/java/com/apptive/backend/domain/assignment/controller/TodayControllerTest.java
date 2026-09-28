@@ -130,6 +130,7 @@ class TodayControllerTest {
 			assignment,
 			"자녀의 답변입니다.",
 			TtsStatus.PROCESSING,
+			"tts-version-revealed",
 			now,
 			now
 		));
@@ -168,6 +169,7 @@ class TodayControllerTest {
 			assignment,
 			"오늘은 함께 산책하고 싶어요.",
 			TtsStatus.PROCESSING,
+			"tts-version-child",
 			now,
 			now
 		));

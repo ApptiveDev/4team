@@ -2,7 +2,9 @@ package com.apptive.backend.domain.answer.service;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,19 +32,22 @@ public class ChildAnswerService {
 	private final RecordingRepository recordingRepository;
 	private final IdGenerator idGenerator;
 	private final Clock clock;
+	private final ApplicationEventPublisher eventPublisher;
 
 	public ChildAnswerService(
 		AssignmentRepository assignmentRepository,
 		ChildAnswerRepository childAnswerRepository,
 		RecordingRepository recordingRepository,
 		IdGenerator idGenerator,
-		Clock clock
+		Clock clock,
+		ApplicationEventPublisher eventPublisher
 	) {
 		this.assignmentRepository = assignmentRepository;
 		this.childAnswerRepository = childAnswerRepository;
 		this.recordingRepository = recordingRepository;
 		this.idGenerator = idGenerator;
 		this.clock = clock;
+		this.eventPublisher = eventPublisher;
 	}
 
 	@Transactional
@@ -72,6 +77,7 @@ public class ChildAnswerService {
 		}
 
 		OffsetDateTime now = OffsetDateTime.now(clock);
+		String ttsVersion = UUID.randomUUID().toString();
 		ChildAnswer answer;
 		if (existing == null) {
 			answer = new ChildAnswer(
@@ -79,15 +85,18 @@ public class ChildAnswerService {
 				assignment,
 				text,
 				TtsStatus.PROCESSING,
+				ttsVersion,
 				now,
 				now
 			);
 		} else {
-			existing.update(text, now);
+			existing.update(text, ttsVersion, now);
 			answer = existing;
 		}
 
-		return toResponse(childAnswerRepository.save(answer));
+		ChildAnswer saved = childAnswerRepository.save(answer);
+		eventPublisher.publishEvent(new ChildAnswerSavedEvent(saved.getId(), ttsVersion));
+		return toResponse(saved);
 	}
 
 	private ChildAnswerResponse toResponse(ChildAnswer answer) {

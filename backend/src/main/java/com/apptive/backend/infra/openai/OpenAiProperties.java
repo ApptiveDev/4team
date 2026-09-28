@@ -18,6 +18,10 @@ public record OpenAiProperties(
 	String transcriptionModel,
 	@NotBlank
 	String summaryModel,
+	@NotBlank
+	String ttsModel,
+	@NotBlank
+	String ttsVoice,
 	Duration connectTimeout,
 	Duration readTimeout
 ) {
