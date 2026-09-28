@@ -360,6 +360,9 @@ flutter run --dart-define=USE_MOCK=false --dart-define=API_BASE_URL=http://10.0.
 Android Studio 설정, Mock 데이터 목록, 자주 겪는 문제는 [`frontend/README.md`](frontend/README.md)를
 참고하세요.
 
+실제 폰 2대로 시연할 때(서버 준비, APK 설치, 시연 순서, 문제 해결)는
+[`docs/demo-guide.md`](docs/demo-guide.md)를 따라 하세요.
+
 ### PR 전 확인
 
 ```bash
