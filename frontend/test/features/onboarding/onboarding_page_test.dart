@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:life_record/app/app.dart';
 import 'package:life_record/core/network/api_exception.dart';
 import 'package:life_record/features/onboarding/data/auth_providers.dart';
+import 'package:life_record/features/onboarding/presentation/onboarding_page.dart';
 import 'package:life_record/features/pairing/data/pairing_providers.dart';
 import 'package:life_record/features/today/data/today_providers.dart';
 
@@ -49,6 +50,13 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.text('누가 사용하시나요?'), findsOneWidget);
+  });
+
+  testWidgets('역할을 고르기 전에 가족끼리만 공유된다고 알려준다', (tester) async {
+    await _pumpApp(tester, FakeAuthDataSource());
+
+    expect(find.text(privacyNote), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
   });
 
   testWidgets('이름이 비어 있거나 공백뿐이면 시작하기를 누를 수 없다', (tester) async {
