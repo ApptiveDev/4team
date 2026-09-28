@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../domain/pairing_repository.dart';
-import 'pairing_page.dart' show formatExpiry;
+import 'expiry_format.dart';
 
 /// 카톡 등으로 보낼 초대 문구. 부모님이 읽고 바로 따라 할 수 있게 쓴다.
 String inviteShareMessage(Invitation invitation) {

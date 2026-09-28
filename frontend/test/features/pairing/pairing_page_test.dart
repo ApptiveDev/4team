@@ -8,6 +8,7 @@ import 'package:life_record/features/onboarding/data/auth_providers.dart';
 import 'package:life_record/features/onboarding/domain/app_user.dart';
 import 'package:life_record/features/pairing/data/pairing_providers.dart';
 import 'package:life_record/features/pairing/domain/pairing_repository.dart';
+import 'package:life_record/features/pairing/presentation/expiry_format.dart';
 import 'package:life_record/features/pairing/presentation/invite_share.dart';
 import 'package:life_record/features/pairing/presentation/pairing_page.dart';
 

@@ -11,6 +11,7 @@ import '../../onboarding/domain/app_user.dart';
 import '../../onboarding/presentation/session.dart';
 import '../data/pairing_providers.dart';
 import '../domain/pairing_repository.dart';
+import 'expiry_format.dart';
 import 'invite_share.dart';
 import 'pairing_controller.dart';
 
@@ -220,15 +221,6 @@ class _InviteContent extends ConsumerWidget {
       ],
     );
   }
-}
-
-/// 예: 9월 26일 오후 9:10
-String formatExpiry(DateTime time) {
-  final local = time.toLocal();
-  final period = local.hour < 12 ? '오전' : '오후';
-  final hour12 = local.hour % 12 == 0 ? 12 : local.hour % 12;
-  final minute = local.minute.toString().padLeft(2, '0');
-  return '${local.month}월 ${local.day}일 $period $hour12:$minute';
 }
 
 class _ParentJoinView extends ConsumerStatefulWidget {
