@@ -86,7 +86,8 @@ class _RoleStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return ListView(
-      padding: _sidePadding.add(const EdgeInsets.only(bottom: 24)),
+      // 제목(Figma 341px)이 한 줄에 들어가도록 좌우 16. 카드는 329로 가운데.
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
         const StepHeader(step: 1),
         const SizedBox(height: 56),
@@ -121,14 +122,17 @@ class _RoleStep extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         // 목소리를 남기기 전에 누가 듣는지 먼저 알린다 (경쟁 서비스 분석 인사이트 10)
-        MergeSemantics(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.lock_outline, size: 24),
-              const SizedBox(width: 8),
-              Expanded(child: Text(privacyNote, style: textTheme.bodyMedium)),
-            ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: MergeSemantics(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.lock_outline, size: 24),
+                const SizedBox(width: 8),
+                Expanded(child: Text(privacyNote, style: textTheme.bodyMedium)),
+              ],
+            ),
           ),
         ),
       ],
@@ -159,6 +163,16 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 329),
+        // 좁은 화면에서는 화면 폭, 넓은 화면에서는 329
+        child: SizedBox(width: double.infinity, child: _card(context)),
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context) {
     return Semantics(
       button: true,
       label: '$label, $description',
