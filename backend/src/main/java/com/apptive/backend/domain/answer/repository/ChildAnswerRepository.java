@@ -1,6 +1,7 @@
 package com.apptive.backend.domain.answer.repository;
 
 import java.util.Optional;
+import java.util.List;
 
 import jakarta.persistence.LockModeType;
 
@@ -14,6 +15,8 @@ import com.apptive.backend.domain.answer.entity.ChildAnswer;
 public interface ChildAnswerRepository extends JpaRepository<ChildAnswer, String> {
 
 	Optional<ChildAnswer> findByAssignment_Id(String assignmentId);
+
+	List<ChildAnswer> findAllByAssignment_IdIn(List<String> assignmentIds);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select ca from ChildAnswer ca where ca.id = :answerId")
