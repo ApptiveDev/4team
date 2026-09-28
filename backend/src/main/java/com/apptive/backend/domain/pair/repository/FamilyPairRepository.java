@@ -16,6 +16,9 @@ public interface FamilyPairRepository extends JpaRepository<FamilyPair, String> 
 	@Query("select (count(p) > 0) from FamilyPair p where p.parent.id = :userId or p.child.id = :userId")
 	boolean existsByMemberId(@Param("userId") String userId);
 
+	@Query("select p from FamilyPair p where p.parent.id = :userId or p.child.id = :userId")
+	Optional<FamilyPair> findByMemberId(@Param("userId") String userId);
+
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select p from FamilyPair p where p.parent.id = :userId or p.child.id = :userId")
 	Optional<FamilyPair> findByMemberIdForUpdate(@Param("userId") String userId);

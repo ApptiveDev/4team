@@ -40,6 +40,8 @@ app:
     base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
     transcription-model: ${OPENAI_TRANSCRIPTION_MODEL:gpt-4o-mini-transcribe}
     summary-model: ${OPENAI_SUMMARY_MODEL:gpt-4o-mini}
+    tts-model: ${OPENAI_TTS_MODEL:gpt-4o-mini-tts}
+    tts-voice: ${OPENAI_TTS_VOICE:alloy}
     connect-timeout: ${OPENAI_CONNECT_TIMEOUT:10s}
     read-timeout: ${OPENAI_READ_TIMEOUT:90s}
   r2:
