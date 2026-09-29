@@ -171,20 +171,20 @@ void main() {
         FakeTodayDataSource(json: _parentWaiting('LLM_PROCESSING')),
       );
 
-      expect(find.text('말씀하신 내용을 글로 정리하고 있어요.'), findsOneWidget);
+      expect(find.text('말씀하신 내용을\n글로 정리하고 있어요.'), findsOneWidget);
     });
 
     testWidgets('정리에 실패해도 목소리는 전해진다고 알린다', (tester) async {
       await _pump(tester, FakeTodayDataSource(json: _parentWaiting('FAILED')));
 
       expect(find.textContaining('목소리는 그대로 전해져요.'), findsOneWidget);
-      expect(find.text('말씀하신 내용을 글로 정리하고 있어요.'), findsNothing);
+      expect(find.text('말씀하신 내용을\n글로 정리하고 있어요.'), findsNothing);
     });
 
     testWidgets('정리가 끝나면 따로 안내하지 않는다', (tester) async {
       await _pump(tester, FakeTodayDataSource(json: _parentWaiting('READY')));
 
-      expect(find.text('말씀하신 내용을 글로 정리하고 있어요.'), findsNothing);
+      expect(find.text('말씀하신 내용을\n글로 정리하고 있어요.'), findsNothing);
       expect(find.textContaining('목소리는 그대로 전해져요.'), findsNothing);
     });
   });

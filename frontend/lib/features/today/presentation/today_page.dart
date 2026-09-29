@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/audio_playback_card.dart';
 import '../../../core/widgets/error_retry_view.dart';
 import '../../child_answer/presentation/child_answer_args.dart';
-import '../../child_answer/presentation/widgets/question_card.dart';
 import '../../onboarding/data/auth_providers.dart';
 import '../../onboarding/presentation/session.dart';
 import '../../onboarding/domain/app_user.dart';
@@ -143,25 +143,46 @@ class _TodayContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
     // 가입할 때 저장한 이름. 읽는 중이거나 없으면 인사 없이 보여준다.
     final name = ref.watch(currentUserProvider).value?.name;
+    final isChild = today.viewerRole == UserRole.child;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(), // 당겨서 새로고침
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      // Figma 홈: 내용 너비 361 (393 화면 좌우 16)
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
         Text(
           formatAssignedDate(today.assignedDate),
-          style: textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+          style: AppText.label,
         ),
         if (name != null && name.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text('$name님, 안녕하세요', style: textTheme.headlineSmall),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text('안녕하세요 $name님', style: AppText.greeting),
+          ),
         ],
-        const SizedBox(height: 12),
-        QuestionCard(questionText: today.question.text),
         const SizedBox(height: 24),
-        if (today.viewerRole == UserRole.child)
+        _TodayQuestionCard(
+          question: today.question.text,
+          // 아직 답하지 않았을 때만 카드 안에 답하기 버튼을 둔다
+          action: today.iAnswered
+              ? null
+              : isChild
+              ? FilledButton.icon(
+                  onPressed: () => _openChildAnswer(context, ref, today, null),
+                  icon: const Icon(Icons.edit),
+                  label: const Text('답하기'),
+                )
+              : FilledButton.icon(
+                  onPressed: () => _openParentRecording(context, ref, today),
+                  icon: const Icon(Icons.mic),
+                  label: const Text('목소리로 답하기'),
+                ),
+        ),
+        const SizedBox(height: 32),
+        if (isChild)
           _ChildSection(today: today)
         else
           _ParentSection(today: today),
@@ -178,6 +199,37 @@ class _TodayContent extends ConsumerWidget {
   }
 }
 
+/// Figma 오늘의 질문 카드(바깥 창): 모서리 20, 위아래 여백 50, 내용 너비 320.
+class _TodayQuestionCard extends StatelessWidget {
+  const _TodayQuestionCard({required this.question, this.action});
+
+  final String question;
+
+  /// 카드 아래쪽 주요 행동. 없으면 질문만 보여준다.
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 40, 20, action == null ? 40 : 32),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.questionCard),
+        boxShadow: AppShadows.questionCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('#오늘의 질문', style: AppText.label),
+          const SizedBox(height: 8),
+          Text(question, style: AppText.question),
+          if (action != null) ...[const SizedBox(height: 24), action!],
+        ],
+      ),
+    );
+  }
+}
+
 /// 다른 화면에 다녀온 뒤 홈을 새로 불러온다.
 Future<void> _openAndRefresh(
   BuildContext context,
@@ -189,22 +241,43 @@ Future<void> _openAndRefresh(
   ref.invalidate(todayProvider);
 }
 
+void _openChildAnswer(
+  BuildContext context,
+  WidgetRef ref,
+  Today today,
+  String? initialText,
+) {
+  _openAndRefresh(
+    context,
+    ref,
+    '/child-answer',
+    extra: ChildAnswerArgs(
+      assignmentId: today.assignmentId,
+      questionText: today.question.text,
+      initialText: initialText, // 이미 답했으면 수정 모드
+    ),
+  );
+}
+
+void _openParentRecording(BuildContext context, WidgetRef ref, Today today) {
+  final my = today.myAnswer;
+  _openAndRefresh(
+    context,
+    ref,
+    '/recording',
+    extra: RecordingArgs(
+      assignmentId: today.assignmentId,
+      questionText: today.question.text,
+      questionAudioUrl: today.question.audioUrl,
+      recordingId: my is VoiceAnswer ? my.recordingId : null, // 처리 상태 재조회
+      canRecord: !today.isRevealed,
+    ),
+  );
+}
+
 class _ChildSection extends ConsumerWidget {
   const _ChildSection({required this.today});
   final Today today;
-
-  void _openAnswer(BuildContext context, WidgetRef ref, String? initialText) {
-    _openAndRefresh(
-      context,
-      ref,
-      '/child-answer',
-      extra: ChildAnswerArgs(
-        assignmentId: today.assignmentId,
-        questionText: today.question.text,
-        initialText: initialText, // 이미 답했으면 수정 모드
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -214,17 +287,7 @@ class _ChildSection extends ConsumerWidget {
     };
 
     if (!today.iAnswered) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _Message('부모님과 같은 질문에 답해요.\n둘 다 답하면 서로의 답을 볼 수 있어요.'),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: () => _openAnswer(context, ref, null),
-            child: const Text('답하기'),
-          ),
-        ],
-      );
+      return const _Message('부모님과 같은 질문에 답해요.\n둘 다 답하면\n서로의 답을 볼 수 있어요.');
     }
 
     if (!today.isRevealed) {
@@ -236,10 +299,7 @@ class _ChildSection extends ConsumerWidget {
           const _Message('부모님이 답하시면\n여기에서 들을 수 있어요.'),
           const SizedBox(height: 20),
           OutlinedButton(
-            onPressed: () => _openAnswer(context, ref, myText),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-            ),
+            onPressed: () => _openChildAnswer(context, ref, today, myText),
             child: const Text('답 고치기'),
           ),
         ],
@@ -293,37 +353,10 @@ class _ParentSection extends ConsumerWidget {
   const _ParentSection({required this.today});
   final Today today;
 
-  void _openRecording(BuildContext context, WidgetRef ref) {
-    final my = today.myAnswer;
-    _openAndRefresh(
-      context,
-      ref,
-      '/recording',
-      extra: RecordingArgs(
-        assignmentId: today.assignmentId,
-        questionText: today.question.text,
-        questionAudioUrl: today.question.audioUrl,
-        recordingId: my is VoiceAnswer ? my.recordingId : null, // 처리 상태 재조회
-        canRecord: !today.isRevealed,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!today.iAnswered) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _Message('목소리로 편하게 답해 주세요.\n30초면 충분해요.'),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: () => _openRecording(context, ref),
-            icon: const Icon(Icons.mic, size: 28),
-            label: const Text('목소리로 답하기'),
-          ),
-        ],
-      );
+      return const _Message('목소리로 편하게 답해 주세요.\n30초면 충분해요.');
     }
 
     if (!today.isRevealed) {
@@ -333,19 +366,16 @@ class _ParentSection extends ConsumerWidget {
       final notice = switch (status) {
         null || 'READY' => null,
         'FAILED' => '글로 정리하지는 못했지만\n목소리는 그대로 전해져요.',
-        _ => '말씀하신 내용을 글로 정리하고 있어요.',
+        _ => '말씀하신 내용을\n글로 정리하고 있어요.',
       };
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Message('목소리를 보냈어요.\n자녀가 답하면 여기에서 볼 수 있어요.'),
+          const _Message('목소리를 보냈어요.\n자녀가 답하면\n여기에서 볼 수 있어요.'),
           if (notice != null) ...[const SizedBox(height: 8), _Message(notice)],
           const SizedBox(height: 20),
           OutlinedButton.icon(
-            onPressed: () => _openRecording(context, ref),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-            ),
+            onPressed: () => _openParentRecording(context, ref, today),
             icon: const Icon(Icons.mic),
             label: const Text('다시 녹음하기'),
           ),
@@ -367,9 +397,6 @@ class _ParentSection extends ConsumerWidget {
           // 음성 상태 조회·재생·링크 갱신은 부모 답변 화면이 처리한다
           OutlinedButton.icon(
             onPressed: () => context.push('/parent-answer'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-            ),
             icon: const Icon(Icons.volume_up),
             label: const Text('목소리로 듣기'),
           ),
@@ -388,6 +415,8 @@ class _Message extends StatelessWidget {
       Text(text, style: Theme.of(context).textTheme.bodyLarge);
 }
 
+/// Figma 답 카드: 모서리 15, 카드색, 그림자 (1, 2) 흐림 7.
+/// 상대의 답(highlighted)은 주색 테두리로 구분한다.
 class _AnswerCard extends StatelessWidget {
   const _AnswerCard({
     required this.label,
@@ -401,21 +430,22 @@ class _AnswerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: highlighted
-            ? theme.colorScheme.secondaryContainer
-            : theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        border: highlighted
+            ? Border.all(color: AppColors.base, width: 2)
+            : null,
+        boxShadow: AppShadows.answerCard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.bodyMedium),
+          Text(label, style: AppText.label),
           const SizedBox(height: 8),
-          Text(text, style: theme.textTheme.titleLarge),
+          Text(text, style: AppText.extraInfo.copyWith(color: AppColors.font)),
         ],
       ),
     );

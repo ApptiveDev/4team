@@ -12,11 +12,13 @@ import 'package:life_record/features/today/data/today_providers.dart';
 import '../pairing/fake_pairing_data_source.dart';
 import '../today/today_fixtures.dart';
 import 'fake_auth_data_source.dart';
+import '../../helpers/phone_size.dart';
 
 Future<void> _pumpApp(
   WidgetTester tester,
   FakeAuthDataSource dataSource,
 ) async {
+  usePhoneSize(tester);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -43,13 +45,13 @@ void main() {
   testWidgets('역할을 고르면 이름 입력으로 넘어가고, 뒤로 가면 다시 고를 수 있다', (tester) async {
     await _pumpApp(tester, FakeAuthDataSource());
 
-    await tester.tap(find.text('부모님'));
+    await tester.tap(find.text('부모님이에요'));
     await tester.pumpAndSettle();
     expect(find.text('성함을 알려주세요'), findsOneWidget);
 
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.text('누가 사용하시나요?'), findsOneWidget);
+    expect(find.text('누구로 시작할까요?'), findsOneWidget);
   });
 
   testWidgets('역할을 고르기 전에 가족끼리만 공유된다고 알려준다', (tester) async {
@@ -61,7 +63,7 @@ void main() {
 
   testWidgets('이름이 비어 있거나 공백뿐이면 시작하기를 누를 수 없다', (tester) async {
     await _pumpApp(tester, FakeAuthDataSource());
-    await tester.tap(find.text('자녀'));
+    await tester.tap(find.text('자녀예요'));
     await tester.pumpAndSettle();
 
     expect(_startButton(tester).onPressed, isNull);
@@ -79,7 +81,7 @@ void main() {
     final dataSource = FakeAuthDataSource();
     await _pumpApp(tester, dataSource);
 
-    await tester.tap(find.text('자녀'));
+    await tester.tap(find.text('자녀예요'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '김민지');
     await tester.pump();
@@ -90,13 +92,13 @@ void main() {
     }
 
     expect(dataSource.requests.single['role'], 'CHILD');
-    expect(find.text('부모님을 초대해 주세요'), findsOneWidget);
+    expect(find.text('부모님을\n초대해 주세요'), findsOneWidget);
   });
 
   testWidgets('이미 연결된 사용자는 오늘 질문으로 이동한다', (tester) async {
     await _pumpApp(tester, FakeAuthDataSource(pairingStatus: 'PAIRED'));
 
-    await tester.tap(find.text('부모님'));
+    await tester.tap(find.text('부모님이에요'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '김영희');
     await tester.pump();
@@ -112,7 +114,7 @@ void main() {
       FakeAuthDataSource(error: ApiException(statusCode: 400)),
     );
 
-    await tester.tap(find.text('자녀'));
+    await tester.tap(find.text('자녀예요'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '김민지');
     await tester.pump();
@@ -127,7 +129,7 @@ void main() {
   testWidgets('네트워크가 끊기면 연결 확인 안내를 보여준다', (tester) async {
     await _pumpApp(tester, FakeAuthDataSource(error: ApiException()));
 
-    await tester.tap(find.text('부모님'));
+    await tester.tap(find.text('부모님이에요'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '김영희');
     await tester.pump();

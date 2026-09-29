@@ -153,7 +153,7 @@ void main() {
       );
 
       expect(find.textContaining('목소리를 보냈어요.'), findsOneWidget);
-      expect(find.text('말씀하신 내용을 글로 정리하고 있어요.'), findsOneWidget);
+      expect(find.text('말씀하신 내용을\n글로 정리하고 있어요.'), findsOneWidget);
 
       await tester.tap(find.text('다시 녹음하기'));
       await tester.pumpAndSettle();
@@ -213,7 +213,7 @@ void main() {
       FakeTodayDataSource(json: todayFixture('waiting_for_both')),
     );
 
-    expect(find.text('김민지님, 안녕하세요'), findsOneWidget);
+    expect(find.text('안녕하세요 김민지님'), findsOneWidget);
   });
 
   testWidgets('이름을 모르면 인사 없이 보여준다', (tester) async {

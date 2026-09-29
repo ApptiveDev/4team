@@ -56,26 +56,26 @@ void main() {
     testWidgets('가입 정보가 없으면 역할 선택부터 시작한다', (tester) async {
       await _launch(tester, stored: {});
 
-      expect(find.text('누가 사용하시나요?'), findsOneWidget);
+      expect(find.text('누구로 시작할까요?'), findsOneWidget);
     });
 
     testWidgets('연결된 사용자는 바로 오늘 질문으로 간다', (tester) async {
       await _launch(tester, stored: _stored());
 
       expect(find.text('어릴 때 가장 좋아했던 놀이는 무엇이었나요?'), findsOneWidget);
-      expect(find.text('누가 사용하시나요?'), findsNothing);
+      expect(find.text('누구로 시작할까요?'), findsNothing);
     });
 
     testWidgets('연결 전 자녀는 페어링으로 간다', (tester) async {
       await _launch(tester, stored: _stored(pairingStatus: 'UNPAIRED'));
 
-      expect(find.text('부모님을 초대해 주세요'), findsOneWidget);
+      expect(find.text('부모님을\n초대해 주세요'), findsOneWidget);
     });
 
     testWidgets('토큰이 없으면 사용자 정보가 있어도 가입부터 한다', (tester) async {
       await _launch(tester, stored: _stored(token: null));
 
-      expect(find.text('누가 사용하시나요?'), findsOneWidget);
+      expect(find.text('누구로 시작할까요?'), findsOneWidget);
     });
   });
 
@@ -89,7 +89,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('누가 사용하시나요?'), findsOneWidget);
+    expect(find.text('누구로 시작할까요?'), findsOneWidget);
     expect(find.textContaining('같은 역할을 고르면 이야기가 그대로 이어져요.'), findsOneWidget);
 
     const storage = FlutterSecureStorage();
