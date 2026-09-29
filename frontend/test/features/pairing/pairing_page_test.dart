@@ -117,6 +117,51 @@ void main() {
       expect(find.text('오늘 화면'), findsOneWidget);
     });
 
+    testWidgets('숫자의 유효 시간이 지나면 새 숫자를 받아 보여준다', (tester) async {
+      final dataSource = FakePairingDataSource(
+        inviteCode: '111111',
+        expiresAt: '2020-01-01T00:00:00+09:00',
+        nextInvitations: [('222222', '2099-01-01T00:00:00+09:00')],
+        pairedAfterChecks: 99,
+      );
+      await _pump(tester, user: _user(UserRole.child), dataSource: dataSource);
+      expect(find.text('111 111'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('222 222'), findsOneWidget);
+      expect(find.textContaining('새 숫자로 바뀌었어요'), findsOneWidget);
+    });
+
+    testWidgets('기기 시각이 틀려 새 숫자도 지나 보이면 계속 다시 받지 않는다', (tester) async {
+      final dataSource = FakePairingDataSource(
+        inviteCode: '111111',
+        expiresAt: '2020-01-01T00:00:00+09:00',
+        pairedAfterChecks: 99,
+      ); // 서버가 같은 숫자를 돌려줌
+      await _pump(tester, user: _user(UserRole.child), dataSource: dataSource);
+
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(seconds: 3));
+      }
+
+      expect(dataSource.invitationCalls, 2); // 처음 1번 + 만료로 1번
+      expect(find.text('111 111'), findsOneWidget);
+    });
+
+    testWidgets('앱으로 돌아오면 바로 연결됐는지 확인한다', (tester) async {
+      final dataSource = FakePairingDataSource(pairedAfterChecks: 1);
+      await _pump(tester, user: _user(UserRole.child), dataSource: dataSource);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      expect(find.text('오늘 화면'), findsOneWidget);
+    });
+
     testWidgets('이미 연결된 자녀는 바로 오늘 화면으로 넘어간다', (tester) async {
       await _pump(
         tester,
