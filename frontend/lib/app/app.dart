@@ -10,7 +10,7 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: '삶을 기록해주는 AI',
+      title: '들려줘요',
       theme: AppTheme.light(),
       routerConfig: ref.watch(routerProvider),
     );
