@@ -279,4 +279,8 @@ fabric.properties
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Local Flutter tooling output
+.widget_preview/
+devtools_options.yaml
 # End of https://www.toptal.com/developers/gitignore/api/kotlin,androidstudio,android,gradle,react,nextjs,visualstudiocode
