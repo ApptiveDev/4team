@@ -16,18 +16,18 @@ import 'fake_stories_repository.dart';
 void main() {
   /// [role]을 주면 그 역할로 로그인한 상태, 안 주면 역할을 모르는 상태(자녀 카드)
   Future<void> pumpPage(
-      WidgetTester tester,
-      FakeStoriesRepository repo, {
-        UserRole? role,
-        FakeParentAnswerRepository? audioRepo,
-      }) async {
+    WidgetTester tester,
+    FakeStoriesRepository repo, {
+    UserRole? role,
+    FakeParentAnswerRepository? audioRepo,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           storiesRepositoryProvider.overrideWithValue(repo),
           if (role != null)
             currentUserProvider.overrideWith(
-                  (ref) async => AppUser(
+              (ref) async => AppUser(
                 id: 'u1',
                 name: '테스트',
                 role: role,
@@ -145,9 +145,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink()); // 오디오 플레이어 정리
   });
 
-  testWidgets('자녀: 부모님 목소리와 내가 쓴 답이 보이고 TTS API는 부르지 않는다', (
-      tester,
-      ) async {
+  testWidgets('자녀: 부모님 목소리와 내가 쓴 답이 보이고 TTS API는 부르지 않는다', (tester) async {
     final audioRepo = FakeParentAnswerRepository();
     await pumpPage(
       tester,

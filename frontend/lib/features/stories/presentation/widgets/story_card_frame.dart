@@ -73,6 +73,7 @@ class AnswerSection extends StatelessWidget {
     );
   }
 }
+
 /// 부모 답을 화면에 보여줄 글로 바꾼다: 정리본 → 원문 → 안내 문구
 String parentAnswerText(StoryParentAnswer parent) {
   final text = parent.displayText;
