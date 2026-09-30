@@ -9,6 +9,8 @@ Story testStory(
   String? summaryText = '정리된 부모님 답',
   String processingStatus = 'READY',
   String? processingNotice,
+  String? originalAudioUrl,
+  String ttsStatus = 'READY',
 }) {
   return Story(
     storyId: 'story_$id',
@@ -21,11 +23,12 @@ Story testStory(
       processingStatus: processingStatus,
       summaryText: summaryText,
       processingNotice: processingNotice,
+      originalAudioUrl: originalAudioUrl,
     ),
     childAnswer: StoryChildAnswer(
       answerId: 'ans_$id',
       text: '자녀 답 $id',
-      ttsStatus: 'READY',
+      ttsStatus: ttsStatus,
     ),
     revealedAt: DateTime(2026, 9, 24, 21),
   );
