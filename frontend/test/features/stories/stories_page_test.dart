@@ -2,23 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_record/core/network/api_exception.dart';
+import 'package:life_record/features/onboarding/data/auth_providers.dart';
+import 'package:life_record/features/onboarding/domain/app_user.dart';
+import 'package:life_record/features/parent_answer/data/parent_answer_providers.dart';
 import 'package:life_record/features/stories/data/stories_providers.dart';
 import 'package:life_record/features/stories/domain/story.dart';
 import 'package:life_record/features/stories/presentation/stories_page.dart';
-import 'package:life_record/features/stories/presentation/widgets/story_card.dart';
+import 'package:life_record/features/stories/presentation/widgets/story_card_frame.dart';
 
+import '../parent_answer/fake_parent_answer_repository.dart';
 import 'fake_stories_repository.dart';
 
 void main() {
-  Future<void> pumpPage(WidgetTester tester, FakeStoriesRepository repo) async {
+  /// [role]을 주면 그 역할로 로그인한 상태, 안 주면 역할을 모르는 상태(자녀 카드)
+  Future<void> pumpPage(
+    WidgetTester tester,
+    FakeStoriesRepository repo, {
+    UserRole? role,
+    FakeParentAnswerRepository? audioRepo,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [storiesRepositoryProvider.overrideWithValue(repo)],
+        overrides: [
+          storiesRepositoryProvider.overrideWithValue(repo),
+          if (role != null)
+            currentUserProvider.overrideWith(
+              (ref) async => AppUser(
+                id: 'u1',
+                name: '테스트',
+                role: role,
+                pairingStatus: PairingStatus.paired,
+              ),
+            ),
+          if (audioRepo != null)
+            parentAnswerRepositoryProvider.overrideWithValue(audioRepo),
+        ],
         child: const MaterialApp(home: StoriesPage()),
       ),
     );
     await tester.pumpAndSettle();
   }
+
+  /// 이야기 하나짜리 첫 페이지
+  FakeStoriesRepository oneStory(Story story) => FakeStoriesRepository({
+    null: StoryPage(items: [story], nextCursor: null, hasNext: false),
+  });
+
+  // ───────────── 목록·페이징·상태 (역할과 무관) ─────────────
 
   testWidgets('이야기 카드와 더 보기 버튼이 보이고, 누르면 다음 이야기가 붙는다', (tester) async {
     final repo = FakeStoriesRepository({
@@ -91,6 +121,72 @@ void main() {
   });
 
   test('날짜는 "9월 24일 목요일" 형식', () {
-    expect(StoryCard.formatDate(DateTime(2026, 9, 24)), '9월 24일 목요일');
+    expect(StoryCardFrame.formatDate(DateTime(2026, 9, 24)), '9월 24일 목요일');
+  });
+
+  // ───────────── 역할별 화면 ─────────────
+
+  testWidgets('부모: 자녀 답 TTS와 내 답(글)만 보이고 내 목소리 재생은 없다', (tester) async {
+    final audioRepo = FakeParentAnswerRepository();
+    await pumpPage(
+      tester,
+      oneStory(testStory('1', originalAudioUrl: 'https://example.test/p.m4a')),
+      role: UserRole.parent,
+      audioRepo: audioRepo,
+    );
+
+    expect(find.text('자녀 답 들어보기'), findsOneWidget);
+    expect(find.text('자녀 답 1'), findsOneWidget);
+    expect(find.text('내가 남긴 답'), findsOneWidget);
+    expect(find.text('정리된 부모님 답'), findsOneWidget);
+    expect(find.text('부모님 목소리 듣기'), findsNothing); // URL이 있어도 부모 화면엔 없음
+    expect(audioRepo.audioCalls, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink()); // 오디오 플레이어 정리
+  });
+
+  testWidgets('자녀: 부모님 목소리와 내가 쓴 답이 보이고 TTS API는 부르지 않는다', (tester) async {
+    final audioRepo = FakeParentAnswerRepository();
+    await pumpPage(
+      tester,
+      oneStory(testStory('1', originalAudioUrl: 'https://example.test/p.m4a')),
+      role: UserRole.child,
+      audioRepo: audioRepo,
+    );
+
+    expect(find.text('부모님 목소리 듣기'), findsOneWidget);
+    expect(find.text('내가 쓴 답'), findsOneWidget);
+    expect(find.text('자녀 답 들어보기'), findsNothing);
+    expect(audioRepo.audioCalls, 0); // 부모 전용 API라 자녀는 호출하면 안 됨
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('부모: TTS 만드는 중이면 안내만 하고 API는 부르지 않는다', (tester) async {
+    final audioRepo = FakeParentAnswerRepository();
+    await pumpPage(
+      tester,
+      oneStory(testStory('1', ttsStatus: 'PROCESSING')),
+      role: UserRole.parent,
+      audioRepo: audioRepo,
+    );
+
+    expect(find.text('자녀의 답을 목소리로 바꾸고 있어요.'), findsOneWidget);
+    expect(find.text('자녀 답 들어보기'), findsNothing);
+    expect(audioRepo.audioCalls, 0);
+  });
+
+  testWidgets('부모: TTS 조회가 실패해도 자녀 글은 보인다', (tester) async {
+    final audioRepo = FakeParentAnswerRepository()
+      ..audioError = ApiException(statusCode: 403); // 재시도 안 하는 에러
+    await pumpPage(
+      tester,
+      oneStory(testStory('1')),
+      role: UserRole.parent,
+      audioRepo: audioRepo,
+    );
+
+    expect(find.text('자녀 답 들어보기'), findsNothing);
+    expect(find.text('자녀 답 1'), findsOneWidget);
   });
 }

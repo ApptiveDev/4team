@@ -58,6 +58,12 @@ class StoryChildAnswer {
   final String answerId;
   final String text;
   final String ttsStatus;
+
+  /// 부모에게 TTS 재생 버튼을 보여줘도 되는지
+  bool get isTtsReady => ttsStatus == 'READY';
+
+  /// 서버가 아직 음성을 만드는 중인지
+  bool get isTtsProcessing => ttsStatus == 'PROCESSING';
 }
 
 /// 한 번에 불러온 목록 한 페이지
